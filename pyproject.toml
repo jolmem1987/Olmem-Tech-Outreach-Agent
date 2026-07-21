@@ -1,0 +1,11 @@
+[project]
+name = "olmem-outreach-agent"
+version = "0.1.0"
+description = "Evidence-based autonomous B2B outreach for Olmem Tech"
+requires-python = ">=3.12"
+
+[tool.vercel]
+entrypoint = "app:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

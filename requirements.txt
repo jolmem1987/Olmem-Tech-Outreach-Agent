@@ -1,0 +1,9 @@
+fastapi==0.117.1
+httpx==0.28.1
+beautifulsoup4==4.13.4
+pydantic==2.11.7
+pydantic-settings==2.10.1
+openai>=2.45.0,<3
+psycopg[binary]==3.2.9
+cryptography>=45.0.6,<47
+python-multipart==0.0.20
