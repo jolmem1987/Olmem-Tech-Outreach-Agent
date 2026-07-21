@@ -3,6 +3,27 @@ name = "olmem-outreach-agent"
 version = "0.1.0"
 description = "Evidence-based autonomous B2B outreach for Olmem Tech"
 requires-python = ">=3.12"
+# Declared here (not only in requirements.txt) because Vercel's Python builder
+# installs the project from pyproject.toml. With an empty dependency list it
+# installed nothing and app.py failed with ModuleNotFoundError: fastapi.
+# Keep this list in sync with requirements.txt.
+dependencies = [
+    "fastapi==0.117.1",
+    "httpx==0.28.1",
+    "beautifulsoup4==4.13.4",
+    "pydantic==2.11.7",
+    "pydantic-settings==2.10.1",
+    "openai>=2.45.0,<3",
+    "psycopg[binary]==3.2.9",
+    "cryptography>=45.0.6,<47",
+    "python-multipart==0.0.20",
+]
+
+# This is a deployed application, not a distributable library — do not try to
+# build/install the project itself as a package (which would fail on the flat
+# app.py + outreach/ layout). Only its dependencies are installed.
+[tool.uv]
+package = false
 
 [tool.vercel]
 entrypoint = "app:app"
