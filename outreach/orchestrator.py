@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+import html
 from typing import Any
 
 from outreach.catalog import CatalogBuilder
 from outreach.composer import EmailComposer
 from outreach.config import get_settings
+from outreach.criteria import get_criteria
 from outreach.db import init_db, job_lock
 from outreach.discovery import ProspectDiscovery
 from outreach.models import FitAssessment, OfferCatalog, ProspectResearch
 from outreach.repository import (
     count_sent_today,
+    create_custom_message,
     create_message,
     get_active_catalog,
     get_eligible_for_send,
+    get_prospect,
     get_prospects_for_research,
+    is_suppressed,
+    mark_message_error,
     mark_message_failed,
     mark_message_sent,
     mark_research_failed,
@@ -142,12 +148,15 @@ class OutreachOrchestrator:
             catalog = get_active_catalog()
             if catalog is None:
                 return {"ok": False, "error": "No active offer catalog"}
+            criteria = get_criteria()
+            autonomous_send = criteria["autonomous_send"]
+            daily_limit = criteria["daily_send_limit"]
             sent_today = count_sent_today()
-            remaining = max(0, self.settings.daily_send_limit - sent_today)
+            remaining = max(0, daily_limit - sent_today)
             if remaining == 0:
                 return {"ok": True, "sent": 0, "skipped": "daily limit reached"}
 
-            rows = get_eligible_for_send(remaining, self.settings.contact_cooldown_days)
+            rows = get_eligible_for_send(remaining, criteria["contact_cooldown_days"])
             offers = {offer.offer_key: offer for offer in catalog.offers}
             composer = EmailComposer()
             sender = SendGridSender()
@@ -166,7 +175,7 @@ class OutreachOrchestrator:
                     token = make_unsubscribe_token(row["contact_email"])
                     unsubscribe_url = f"{self.settings.app_base_url}/api/unsubscribe/{token}"
 
-                    if not self.settings.autonomous_send:
+                    if not autonomous_send:
                         sync_to_admin(
                             "outreach_preview",
                             {
@@ -223,10 +232,119 @@ class OutreachOrchestrator:
 
             return {
                 "ok": True,
-                "autonomous_send": self.settings.autonomous_send,
+                "autonomous_send": autonomous_send,
                 "candidates": len(rows),
                 "sent": sent,
                 "previewed": previewed,
                 "failed": failed,
-                "daily_limit": self.settings.daily_send_limit,
+                "daily_limit": daily_limit,
             }
+
+    # -- Manual, admin-triggered sends ------------------------------------
+
+    def _unsubscribe_url(self, email: str) -> str:
+        token = make_unsubscribe_token(email)
+        return f"{self.settings.app_base_url}/api/unsubscribe/{token}"
+
+    def send_prospect_now(self, prospect_id: str) -> dict[str, Any]:
+        """Compose the AI outreach draft for one prospect and send it now,
+        bypassing the autonomous-send gate and daily limit. Still respects the
+        suppression list. Used by the admin 'approve & send' action."""
+        prospect = get_prospect(prospect_id)
+        if prospect is None:
+            return {"ok": False, "error": "Prospect not found."}
+        recipient = prospect.get("contact_email")
+        if not recipient:
+            return {"ok": False, "error": "This prospect has no verified contact email."}
+        if is_suppressed(recipient):
+            return {"ok": False, "error": f"{recipient} is on the suppression (do-not-contact) list."}
+        if not prospect.get("research_json") or not prospect.get("fit_json"):
+            return {"ok": False, "error": "This prospect has not been researched and scored yet."}
+
+        catalog = get_active_catalog()
+        if catalog is None:
+            return {"ok": False, "error": "No active offer catalog."}
+        offers = {offer.offer_key: offer for offer in catalog.offers}
+        offer = offers.get(prospect.get("selected_offer_key"))
+        if offer is None:
+            return {"ok": False, "error": "The prospect's selected offer is not in the active catalog. Re-run research to rescore."}
+
+        research = ProspectResearch.model_validate(prospect["research_json"])
+        fit = FitAssessment.model_validate(prospect["fit_json"])
+        try:
+            draft = EmailComposer().compose(offer, research, fit)
+        except Exception as exc:
+            return {"ok": False, "error": f"Draft could not be composed: {exc}"}
+
+        message_id = create_message(
+            prospect_id,
+            catalog.catalog_version,
+            offer.offer_key,
+            recipient,
+            draft.subject,
+            draft.text_body,
+            draft.html_body,
+        )
+        try:
+            provider_id = SendGridSender().send(
+                message_id=message_id,
+                recipient_email=recipient,
+                subject=draft.subject,
+                text_body=draft.text_body,
+                html_body=draft.html_body,
+                unsubscribe_url=self._unsubscribe_url(recipient),
+            )
+            mark_message_sent(message_id, provider_id)
+            sync_to_admin(
+                "outreach_sent",
+                {
+                    "prospect_id": prospect_id,
+                    "message_id": message_id,
+                    "company_name": prospect.get("company_name"),
+                    "recipient_email": recipient,
+                    "fit_score": prospect.get("fit_score"),
+                    "offer_key": offer.offer_key,
+                    "subject": draft.subject,
+                    "reply_to": self.settings.reply_to_email,
+                    "manual": True,
+                },
+            )
+            return {"ok": True, "message_id": message_id, "recipient": recipient, "subject": draft.subject}
+        except Exception as exc:
+            mark_message_failed(message_id, str(exc))
+            return {"ok": False, "error": f"SendGrid rejected the message: {exc}"}
+
+    def send_custom(self, prospect_id: str, subject: str, body: str, recipient: str | None = None) -> dict[str, Any]:
+        """Send an admin-written custom email to a prospect."""
+        prospect = get_prospect(prospect_id)
+        if prospect is None:
+            return {"ok": False, "error": "Prospect not found."}
+        recipient = (recipient or prospect.get("contact_email") or "").strip()
+        if not recipient:
+            return {"ok": False, "error": "No recipient email available for this prospect."}
+        if is_suppressed(recipient):
+            return {"ok": False, "error": f"{recipient} is on the suppression (do-not-contact) list."}
+        subject = subject.strip()
+        body = body.strip()
+        if not subject or not body:
+            return {"ok": False, "error": "Subject and message are both required."}
+
+        safe = html.escape(body).replace("\n\n", "</p><p>").replace("\n", "<br>")
+        html_body = f"<p>{safe}</p>"
+        catalog = get_active_catalog()
+        catalog_version = catalog.catalog_version if catalog else "manual"
+        message_id = create_custom_message(prospect_id, recipient, subject, body, html_body, catalog_version)
+        try:
+            provider_id = SendGridSender().send(
+                message_id=message_id,
+                recipient_email=recipient,
+                subject=subject,
+                text_body=body,
+                html_body=html_body,
+                unsubscribe_url=self._unsubscribe_url(recipient),
+            )
+            mark_message_sent(message_id, provider_id)
+            return {"ok": True, "message_id": message_id, "recipient": recipient, "subject": subject}
+        except Exception as exc:
+            mark_message_error(message_id, str(exc))
+            return {"ok": False, "error": f"SendGrid rejected the message: {exc}"}

@@ -325,3 +325,163 @@ def suppress_email(email: str, reason: str, source: str | None = None) -> None:
             (email.strip(), reason, source),
         )
         conn.commit()
+
+
+def is_suppressed(email: str) -> bool:
+    with connection() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM outreach_suppressions WHERE email = LOWER(%s)", (email,)
+        ).fetchone()
+    return row is not None
+
+
+def create_custom_message(
+    prospect_id: str,
+    recipient_email: str,
+    subject: str,
+    text_body: str,
+    html_body: str,
+    catalog_version: str,
+) -> str:
+    """Insert an admin-authored custom message (does not change prospect status)."""
+    with connection() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO outreach_messages
+                (prospect_id, catalog_version, offer_key, recipient_email,
+                 subject, text_body, html_body, status)
+            VALUES (%s, %s, 'custom', %s, %s, %s, %s, 'drafted')
+            RETURNING id
+            """,
+            (prospect_id, catalog_version, recipient_email, subject, text_body, html_body),
+        ).fetchone()
+        conn.commit()
+    return str(row["id"])
+
+
+def mark_message_error(message_id: str, error: str) -> None:
+    """Mark a message failed without altering the prospect's status."""
+    with connection() as conn:
+        conn.execute(
+            "UPDATE outreach_messages SET status = 'failed', html_body = html_body || %s WHERE id = %s",
+            (f"\n<!-- SEND ERROR: {error[:500]} -->", message_id),
+        )
+        conn.commit()
+
+
+# -- Admin panel read queries --------------------------------------------
+
+def get_prospect(prospect_id: str) -> dict[str, Any] | None:
+    with connection() as conn:
+        row = conn.execute("SELECT * FROM outreach_prospects WHERE id = %s", (prospect_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def list_prospects(status: str | None = None, search: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
+    clauses: list[str] = []
+    params: list[Any] = []
+    if status:
+        clauses.append("status = %s")
+        params.append(status)
+    if search:
+        clauses.append("(company_name ILIKE %s OR website ILIKE %s OR domain ILIKE %s OR contact_email ILIKE %s)")
+        like = f"%{search}%"
+        params.extend([like, like, like, like])
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    params.append(limit)
+    with connection() as conn:
+        rows = conn.execute(
+            f"""
+            SELECT id, company_name, website, domain, status, contact_email,
+                   selected_offer_key, fit_score, last_contacted_at, updated_at
+            FROM outreach_prospects
+            {where}
+            ORDER BY (fit_score IS NULL), fit_score DESC, updated_at DESC
+            LIMIT %s
+            """,
+            tuple(params),
+        ).fetchall()
+    return list(rows)
+
+
+def list_messages(status: str | None = None, prospect_id: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
+    clauses: list[str] = []
+    params: list[Any] = []
+    if status:
+        clauses.append("m.status = %s")
+        params.append(status)
+    if prospect_id:
+        clauses.append("m.prospect_id = %s")
+        params.append(prospect_id)
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+    params.append(limit)
+    with connection() as conn:
+        rows = conn.execute(
+            f"""
+            SELECT m.id, m.prospect_id, m.recipient_email, m.subject, m.status,
+                   m.offer_key, m.provider_message_id, m.sent_at, m.created_at,
+                   p.company_name
+            FROM outreach_messages m
+            LEFT JOIN outreach_prospects p ON p.id = m.prospect_id
+            {where}
+            ORDER BY m.created_at DESC
+            LIMIT %s
+            """,
+            tuple(params),
+        ).fetchall()
+    return list(rows)
+
+
+def get_message(message_id: str) -> dict[str, Any] | None:
+    with connection() as conn:
+        row = conn.execute(
+            """
+            SELECT m.*, p.company_name
+            FROM outreach_messages m
+            LEFT JOIN outreach_prospects p ON p.id = m.prospect_id
+            WHERE m.id = %s
+            """,
+            (message_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def dashboard_stats() -> dict[str, Any]:
+    with connection() as conn:
+        status_rows = conn.execute(
+            "SELECT status, COUNT(*) AS c FROM outreach_prospects GROUP BY status"
+        ).fetchall()
+        totals = conn.execute(
+            """
+            SELECT
+                (SELECT COUNT(*) FROM outreach_prospects) AS prospects,
+                (SELECT COUNT(*) FROM outreach_prospects WHERE status = 'eligible') AS eligible,
+                (SELECT COUNT(*) FROM outreach_messages WHERE status IN ('sent','delivered','opened','clicked')) AS sent,
+                (SELECT COUNT(*) FROM outreach_messages WHERE sent_at >= NOW() - INTERVAL '7 days') AS sent_7d,
+                (SELECT COUNT(*) FROM outreach_suppressions) AS suppressions
+            """
+        ).fetchone()
+        catalog = conn.execute(
+            """
+            SELECT catalog_version,
+                   jsonb_array_length(catalog_json -> 'offers') AS offers,
+                   created_at
+            FROM outreach_catalog_versions
+            WHERE active = TRUE
+            ORDER BY created_at DESC
+            LIMIT 1
+            """
+        ).fetchone()
+    return {
+        "by_status": {r["status"]: r["c"] for r in status_rows},
+        "totals": dict(totals) if totals else {},
+        "catalog": dict(catalog) if catalog else None,
+    }
+
+
+def message_status_counts() -> dict[str, int]:
+    with connection() as conn:
+        rows = conn.execute(
+            "SELECT status, COUNT(*) AS c FROM outreach_messages GROUP BY status"
+        ).fetchall()
+    return {r["status"]: r["c"] for r in rows}

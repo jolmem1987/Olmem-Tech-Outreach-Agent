@@ -197,6 +197,32 @@ This project is designed for careful, low-volume B2B outreach. It intentionally 
 support purchased lists, guessed addresses, scraping personal profiles, protected-trait
 inference, deceptive subjects, or high-volume blasting.
 
+## Admin console
+
+A branded, password-protected web console is served by the same app at `/admin`.
+Set `ADMIN_PASSWORD` in the environment to enable sign-in (if it is unset, the
+console refuses all logins). The session is a stateless signed cookie (HMAC with
+`TOKEN_SECRET`), so it works on serverless with no session store.
+
+What it does:
+
+- **Dashboard** — prospect counts by status, eligible/sent totals, active catalog,
+  and one-click buttons to run any pipeline job (catalog, discover, research, send)
+  on demand instead of waiting for the daily cron.
+- **Prospects** — searchable/filterable list; each prospect shows its research and
+  fit assessment, its email history, and two send actions: **approve & send the AI
+  draft now** (bypasses the autonomous-send gate and daily limit, still respects the
+  suppression list) and **send a custom message**.
+- **Emails** — every drafted/sent message with status, filterable; open one to read
+  the exact body that was sent.
+- **Criteria** — edit the fit-score gate (minimum score and per-component minimums),
+  the rubric weights (max points per dimension), and operational knobs (daily send
+  limit, contact cooldown, autonomous-send on/off, named-email policy, discovery
+  regions). Overrides are stored in the `outreach_settings` table and applied on the
+  next research/send run. "Reset to defaults" clears the overrides.
+
+All manual sends are recorded in `outreach_messages` exactly like automated ones.
+
 ## Local run
 
 ```powershell

@@ -65,12 +65,15 @@ class ProspectResearch(BaseModel):
     evidence: list[Evidence]
 
 
+# Upper bounds are the maximum a component could ever be configured to; the
+# effective per-component maxima are set in the admin criteria and enforced by
+# FitScorer (which clamps each value to the configured weight).
 class ScoreComponents(BaseModel):
-    problem_evidence: int = Field(ge=0, le=35)
-    offer_alignment: int = Field(ge=0, le=30)
-    customer_fit: int = Field(ge=0, le=15)
-    contact_quality: int = Field(ge=0, le=10)
-    timing_signal: int = Field(ge=0, le=10)
+    problem_evidence: int = Field(ge=0, le=100)
+    offer_alignment: int = Field(ge=0, le=100)
+    customer_fit: int = Field(ge=0, le=100)
+    contact_quality: int = Field(ge=0, le=100)
+    timing_signal: int = Field(ge=0, le=100)
 
     @property
     def total(self) -> int:

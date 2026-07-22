@@ -2,27 +2,8 @@ from __future__ import annotations
 
 import json
 
+from outreach.criteria import WEIGHT_KEYS, get_criteria, score_instructions
 from outreach.models import FitAssessment, OfferCatalog, ProspectResearch, SendDecision
-
-
-SCORE_INSTRUCTIONS = """
-Evaluate whether one current company offer is a strong, evidence-based match for this
-business. The number is a fit score, not a probability. Select at most one offer.
-
-Use this exact 100-point rubric:
-- problem_evidence, 0-35: concrete website evidence of a real problem the offer solves;
-- offer_alignment, 0-30: direct alignment between that problem and an explicit offer;
-- customer_fit, 0-15: explicit target-customer or operational fit;
-- contact_quality, 0-10: a publicly posted appropriate business email and source URL;
-- timing_signal, 0-10: current evidence such as growth, hiring, launch, expansion, or a
-  recently described problem. Do not invent timing.
-
-A business should normally remain below 80 unless there is concrete problem evidence,
-a direct offer match, at least two independent evidence facts, and a valid public business
-email. Industry alone is insufficient. Return contradictions for any no-solicitation text,
-closed business, existing strong solution that removes the need, unsupported contact,
-or mismatch. Do not select an offer that is absent from the provided catalog.
-"""
 
 
 class FitScorer:
@@ -31,6 +12,7 @@ class FitScorer:
         from outreach.llm import StructuredLLM
 
         self.settings = get_settings()
+        self.criteria = get_criteria()
         self.llm = StructuredLLM()
 
     def score(self, catalog: OfferCatalog, research: ProspectResearch) -> FitAssessment:
@@ -38,11 +20,18 @@ class FitScorer:
             "active_offer_catalog": catalog.model_dump(mode="json"),
             "prospect_research": research.model_dump(mode="json"),
         }
-        return self.llm.parse(
-            instructions=SCORE_INSTRUCTIONS,
+        fit = self.llm.parse(
+            instructions=score_instructions(self.criteria),
             input_text=json.dumps(payload, indent=2),
             schema=FitAssessment,
         )
+        # Enforce the configured per-component maxima regardless of what the
+        # model returned, so admin-edited weights are the real ceiling.
+        weights = self.criteria["weights"]
+        for key in WEIGHT_KEYS:
+            current = getattr(fit.components, key)
+            setattr(fit.components, key, max(0, min(int(weights[key]), int(current))))
+        return fit
 
     def validate(
         self,
@@ -50,6 +39,22 @@ class FitScorer:
         research: ProspectResearch,
         fit: FitAssessment,
     ) -> SendDecision:
+        # Prefer the criteria loaded at construction; fall back to defaults
+        # (without touching the DB) when validate is used in isolation/tests.
+        criteria = getattr(self, "criteria", None)
+        if criteria:
+            min_fit = criteria["min_fit_score"]
+            min_pe = criteria["min_problem_evidence"]
+            min_oa = criteria["min_offer_alignment"]
+            min_cq = criteria["min_contact_quality"]
+        else:
+            from outreach.criteria import DEFAULT_GATE_MINIMUMS
+
+            min_fit = self.settings.min_fit_score
+            min_pe = DEFAULT_GATE_MINIMUMS["min_problem_evidence"]
+            min_oa = DEFAULT_GATE_MINIMUMS["min_offer_alignment"]
+            min_cq = DEFAULT_GATE_MINIMUMS["min_contact_quality"]
+
         reasons: list[str] = []
         offer_keys = {offer.offer_key for offer in catalog.offers}
         research_urls = {item.url for item in research.evidence}
@@ -57,13 +62,13 @@ class FitScorer:
 
         if fit.selected_offer_key not in offer_keys:
             reasons.append("No active website offer was selected")
-        if fit.total_score < self.settings.min_fit_score:
-            reasons.append(f"Fit score {fit.total_score} is below {self.settings.min_fit_score}")
-        if fit.components.problem_evidence < 20:
+        if fit.total_score < min_fit:
+            reasons.append(f"Fit score {fit.total_score} is below {min_fit}")
+        if fit.components.problem_evidence < min_pe:
             reasons.append("Problem evidence is too weak")
-        if fit.components.offer_alignment < 20:
+        if fit.components.offer_alignment < min_oa:
             reasons.append("Offer alignment is too weak")
-        if fit.components.contact_quality < 8:
+        if fit.components.contact_quality < min_cq:
             reasons.append("Contact quality is too weak")
         if not research.business_email or not research.business_email_source_url:
             reasons.append("No verified public business email")

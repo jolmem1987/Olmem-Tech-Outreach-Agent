@@ -79,3 +79,12 @@ CREATE TABLE IF NOT EXISTS outreach_job_runs (
     started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     finished_at TIMESTAMPTZ
 );
+
+-- Single-row store for admin-editable scoring criteria and operational knobs.
+-- Only keys present here override the environment/config defaults; an empty
+-- object means "use the configured defaults".
+CREATE TABLE IF NOT EXISTS outreach_settings (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    criteria_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

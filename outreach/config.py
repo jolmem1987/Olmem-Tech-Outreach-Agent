@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     database_url: str
     cron_secret: str = Field(min_length=16)
     token_secret: str = Field(min_length=16)
+    admin_password: str | None = None
 
     openai_api_key: str
     openai_model: str = "gpt-5-mini"

@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse
 
+from outreach.admin import router as admin_router
 from outreach.config import get_settings
 from outreach.orchestrator import OutreachOrchestrator
 from outreach.sender import process_sendgrid_events
@@ -10,6 +11,7 @@ from outreach.suppression import suppress_from_token
 
 app = FastAPI(title="Olmem Outreach Agent", version="0.1.0")
 settings = get_settings()
+app.include_router(admin_router)
 
 
 def verify_cron(authorization: str | None) -> None:

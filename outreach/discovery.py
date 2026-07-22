@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import httpx
 
 from outreach.config import get_settings
+from outreach.criteria import get_criteria
 from outreach.models import Candidate, OfferCatalog
 from outreach.util import is_blocked_platform, normalize_domain, normalize_url
 
@@ -12,13 +13,15 @@ from outreach.util import is_blocked_platform, normalize_domain, normalize_url
 class ProspectDiscovery:
     def __init__(self) -> None:
         self.settings = get_settings()
+        regions_raw = get_criteria()["discovery_regions"]
+        self.regions = [item.strip() for item in regions_raw.split(",") if item.strip()]
 
     def _queries(self, catalog: OfferCatalog) -> list[str]:
         queries: list[str] = []
         for offer in catalog.offers:
             bases = offer.search_queries or offer.ideal_customer_signals[:3]
             for base in bases:
-                for region in self.settings.regions:
+                for region in self.regions:
                     queries.append(f"{base} {region} business")
         return list(dict.fromkeys(queries))[: max(10, self.settings.max_discoveries_per_run * 2)]
 

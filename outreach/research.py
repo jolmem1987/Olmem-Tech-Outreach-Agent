@@ -3,6 +3,7 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from outreach.config import get_settings
+from outreach.criteria import get_criteria
 from outreach.crawler import WebCrawler
 from outreach.llm import StructuredLLM
 from outreach.models import ProspectResearch, SitePage
@@ -49,6 +50,7 @@ no meaningful match.
 class ProspectResearcher:
     def __init__(self) -> None:
         self.settings = get_settings()
+        self.allow_named_public_emails = get_criteria()["allow_named_public_emails"]
         self.llm = StructuredLLM()
 
     @staticmethod
@@ -97,7 +99,7 @@ class ProspectResearcher:
             is_generic = local_part in GENERIC_LOCAL_PARTS or any(
                 local_part.startswith(f"{prefix}+") for prefix in GENERIC_LOCAL_PARTS
             )
-            if source is None or (not self.settings.allow_named_public_emails and not is_generic):
+            if source is None or (not self.allow_named_public_emails and not is_generic):
                 research.business_email = None
                 research.business_email_source_url = None
             else:
