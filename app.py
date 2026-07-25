@@ -16,6 +16,7 @@ app = FastAPI(title="Olmem Outreach Agent", version="0.1.0")
 BOOT_ERROR: str | None = None
 try:
     from outreach.admin import router as admin_router
+    from outreach.adminauth import is_authenticated
     from outreach.config import get_settings
     from outreach.orchestrator import OutreachOrchestrator
     from outreach.sender import process_sendgrid_events
@@ -26,6 +27,24 @@ try:
 except Exception as exc:  # noqa: BLE001 - any boot failure must stay reportable
     BOOT_ERROR = f"{type(exc).__name__}: {exc}"
     BOOT_TRACEBACK = traceback.format_exc()
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception(request: Request, exc: Exception) -> JSONResponse:
+    """Return the real error to a signed-in admin, an opaque 500 to anyone else.
+
+    Runtime failures (a database that will not connect, a rejected DDL) otherwise
+    surface as a bare 500 with the cause only in the Vercel log stream.
+    """
+    if not BOOT_ERROR and is_authenticated(request):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": f"{type(exc).__name__}: {exc}",
+                "traceback": traceback.format_exc().splitlines()[-15:],
+            },
+        )
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 
 def require_boot() -> None:
