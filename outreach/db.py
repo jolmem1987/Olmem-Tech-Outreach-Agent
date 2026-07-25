@@ -18,11 +18,22 @@ def connection() -> Iterator[psycopg.Connection]:
         yield conn
 
 
+def split_statements(script: str) -> list[str]:
+    """Split a DDL script on statement boundaries.
+
+    Line comments are stripped first. A semicolon inside a ``--`` comment would
+    otherwise split the script mid-sentence and send the remaining prose to the
+    server as its own statement. The schema contains no string literals holding
+    ``--`` or ``;``, so dropping comments this way is safe here.
+    """
+    stripped = "\n".join(line.split("--", 1)[0] for line in script.splitlines())
+    return [part.strip() for part in stripped.split(";") if part.strip()]
+
+
 def init_db() -> None:
     schema_path = Path(__file__).resolve().parent.parent / "sql" / "schema.sql"
-    statements = [part.strip() for part in schema_path.read_text(encoding="utf-8").split(";") if part.strip()]
     with connection() as conn:
-        for statement in statements:
+        for statement in split_statements(schema_path.read_text(encoding="utf-8")):
             conn.execute(statement)
         conn.commit()
 
