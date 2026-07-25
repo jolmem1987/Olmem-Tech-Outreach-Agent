@@ -81,7 +81,7 @@ def login_form(request: Request) -> HTMLResponse:
     return _html(adminui.login_page(configured=admin_configured()))
 
 
-@router.post("/admin/login")
+@router.post("/admin/login", response_model=None)
 def login_submit(request: Request, password: str = Form("")) -> RedirectResponse | HTMLResponse:
     if not admin_configured():
         return _html(adminui.login_page(configured=False))
@@ -105,7 +105,7 @@ def logout() -> RedirectResponse:
 
 # -- Dashboard ------------------------------------------------------------
 
-@router.get("/admin", response_class=HTMLResponse)
+@router.get("/admin", response_class=HTMLResponse, response_model=None)
 def dashboard(request: Request, msg: str | None = Query(None), err: str | None = Query(None)) -> HTMLResponse | RedirectResponse:
     if not is_authenticated(request):
         return _login_redirect()
@@ -134,7 +134,7 @@ def run_job(request: Request, job: str) -> RedirectResponse:
 
 # -- Prospects ------------------------------------------------------------
 
-@router.get("/admin/prospects", response_class=HTMLResponse)
+@router.get("/admin/prospects", response_class=HTMLResponse, response_model=None)
 def prospects(
     request: Request,
     q: str = Query(""),
@@ -149,7 +149,7 @@ def prospects(
     return _html(adminui.prospects_page(rows, status=status, search=q, msg=msg, err=err))
 
 
-@router.get("/admin/prospects/{prospect_id}", response_class=HTMLResponse)
+@router.get("/admin/prospects/{prospect_id}", response_class=HTMLResponse, response_model=None)
 def prospect_detail(
     request: Request, prospect_id: str, msg: str | None = Query(None), err: str | None = Query(None)
 ) -> HTMLResponse | RedirectResponse:
@@ -201,7 +201,7 @@ def send_custom(
 
 # -- Emails ---------------------------------------------------------------
 
-@router.get("/admin/emails", response_class=HTMLResponse)
+@router.get("/admin/emails", response_class=HTMLResponse, response_model=None)
 def emails(
     request: Request, status: str = Query(""), msg: str | None = Query(None), err: str | None = Query(None)
 ) -> HTMLResponse | RedirectResponse:
@@ -212,7 +212,7 @@ def emails(
     return _html(adminui.emails_page(rows, message_status_counts(), status=status, msg=msg, err=err))
 
 
-@router.get("/admin/emails/{message_id}", response_class=HTMLResponse)
+@router.get("/admin/emails/{message_id}", response_class=HTMLResponse, response_model=None)
 def email_detail(request: Request, message_id: str) -> HTMLResponse | RedirectResponse:
     if not is_authenticated(request):
         return _login_redirect()
@@ -227,7 +227,7 @@ def email_detail(request: Request, message_id: str) -> HTMLResponse | RedirectRe
 
 # -- Criteria -------------------------------------------------------------
 
-@router.get("/admin/criteria", response_class=HTMLResponse)
+@router.get("/admin/criteria", response_class=HTMLResponse, response_model=None)
 def criteria_form(
     request: Request, reset: str | None = Query(None), msg: str | None = Query(None), err: str | None = Query(None)
 ) -> HTMLResponse | RedirectResponse:
