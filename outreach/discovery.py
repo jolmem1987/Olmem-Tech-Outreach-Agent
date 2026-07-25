@@ -56,6 +56,10 @@ class ProspectDiscovery:
                 response = httpx.post(
                     "https://api.tavily.com/search",
                     timeout=25,
+                    # Tavily originally took the key in the body and now expects a
+                    # bearer header. Send both so the job does not silently return
+                    # nothing if either form is retired.
+                    headers={"Authorization": f"Bearer {self.settings.tavily_api_key}"},
                     json={
                         "api_key": self.settings.tavily_api_key,
                         "query": query,
