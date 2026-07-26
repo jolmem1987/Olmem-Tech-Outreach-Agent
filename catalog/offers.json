@@ -221,18 +221,21 @@
     {
       "offer_key": "smart-chatbot",
       "name": "Smart Chat Bot",
-      "summary": "A $500 one-time AI chatbot trained on the business's own services and FAQs, which answers common questions and captures leads around the clock on a website they already have.",
+      "summary": "A $500 one-time AI assistant that works as a lead generator on the site a business already has. It qualifies visitors, collects their details, and sends every captured lead straight to their email or CRM, so enquiries outside business hours are not lost.",
       "problems_solved": [
-        "Visitors ask the same questions and nobody answers outside business hours",
-        "Enquiries arrive only through a contact form that goes unanswered until the next day",
-        "Visitors leave without being qualified or captured as a lead",
-        "Staff spend time answering identical questions by phone"
+        "Enquiries arrive outside business hours and nobody answers until the next day",
+        "Visitors leave without ever identifying themselves, so there is no lead to follow up",
+        "The contact form produces raw submissions with no qualifying detail behind them",
+        "A small team cannot always respond quickly, and slow replies lose the job",
+        "Staff spend the day answering the same basic questions by phone and email"
       ],
       "ideal_customer_signals": [
-        "An existing website with no live chat or automated lead capture",
-        "A published FAQ page indicating high repeat question volume",
-        "Appointment or estimate-driven service business",
-        "Contact page that lists only a phone number and business hours"
+        "An existing website whose only contact route is a form or a phone number",
+        "No live chat or automated lead capture anywhere on the site",
+        "Wording that promises to get back to visitors, implying a manual queue",
+        "Estimate, quote, or appointment driven service business",
+        "Published business hours, so traffic outside them goes unanswered",
+        "A published FAQ page, indicating high repeat question volume"
       ],
       "exclusion_signals": [
         "A live chat or chatbot widget is already present on the site",
@@ -240,18 +243,20 @@
         "No website exists to install it on"
       ],
       "allowed_claims": [
-        "The Smart Chat Bot is $500 one-time for a site the business already has",
-        "It provides 24/7 lead capture and FAQ responses",
-        "It runs lead qualification conversation flows",
+        "The Smart Chat Bot is $500 one-time to add to a website the business already has",
+        "It captures leads and answers FAQs 24/7, including when the business is closed",
+        "It asks qualifying questions before collecting contact details, so leads arrive pre-qualified rather than as raw form submissions",
+        "A notification is sent every time a lead is captured",
+        "Captured leads can flow into an existing CRM, email platform, or notification system",
         "It is trained on the business's own services and FAQs",
-        "Website integration is included",
-        "It is included at no extra cost with every Olmem Tech website package"
+        "Website integration and setup are included",
+        "An AI chatbot is included at no extra cost with every Olmem Tech website package"
       ],
-      "call_to_action": "Offer to show the questions a chatbot would field on their site in its first week.",
-      "landing_url": "https://www.olmemtech.com/chatbot-starter",
+      "call_to_action": "Offer to show what the assistant would ask their visitors, and what a captured lead would look like when it lands in their inbox.",
+      "landing_url": "https://www.olmemtech.com/chatbot-business",
       "evidence_urls": [
-        "https://www.olmemtech.com/chatbot-starter",
-        "https://www.olmemtech.com/pricing"
+        "https://www.olmemtech.com/chatbot-business",
+        "https://www.olmemtech.com/chatbot-starter"
       ],
       "search_queries": [
         "auto repair shop",
