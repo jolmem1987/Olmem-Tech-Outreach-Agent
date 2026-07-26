@@ -9,7 +9,13 @@ import httpx
 from outreach.config import get_settings
 from outreach.criteria import get_criteria
 from outreach.models import Candidate, OfferCatalog
-from outreach.util import is_blocked_platform, normalize_domain, normalize_url
+from outreach.util import (
+    is_blocked_platform,
+    is_non_business_host,
+    looks_like_listicle,
+    normalize_domain,
+    normalize_url,
+)
 
 
 class ProspectDiscovery:
@@ -116,7 +122,10 @@ class ProspectDiscovery:
                 continue
             for result in results:
                 url = normalize_url(result.get("url", ""))
-                if not url or is_blocked_platform(url):
+                title = result.get("title")
+                if not url or is_blocked_platform(url) or is_non_business_host(url):
+                    continue
+                if looks_like_listicle(url, title):
                     continue
                 candidates.append(
                     Candidate(
@@ -138,6 +147,8 @@ class ProspectDiscovery:
                 continue
             domain = normalize_domain(url)
             if not domain or domain == own_domain or is_blocked_platform(url):
+                continue
+            if is_non_business_host(url):
                 continue
             parsed = urlparse(url)
             root = f"{parsed.scheme}://{parsed.netloc}/"

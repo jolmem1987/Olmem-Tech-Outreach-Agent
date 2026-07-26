@@ -80,7 +80,89 @@ BLOCKED_HOST_SUFFIXES = (
     "homedepot.com",
     "lowes.com",
     "menards.com",
+    # Business-for-sale and commercial property marketplaces
+    "bizbuysell.com",
+    "bizquest.com",
+    "businessesforsale.com",
+    "loopnet.com",
+    "sunbeltnetwork.com",
+    "businessbroker.net",
+    # Ranking, review, and "top companies" aggregators
+    "clutch.co",
+    "builtin.com",
+    "industryselect.com",
+    "fixr.com",
+    "expertise.com",
+    "threebestrated.com",
+    "trustpilot.com",
+    "birdeye.com",
+    "g2.com",
+    "capterra.com",
+    "superpages.com",
+    "nicelocal.com",
+    "local.com",
+    "citysearch.com",
+    # Reference, health, and insurance sites that outrank small businesses
+    "wikipedia.org",
+    "mayoclinic.org",
+    "webmd.com",
+    "healthline.com",
+    "deltadental.com",
+    "deltadentalins.com",
+    "cigna.com",
+    "aetna.com",
+    "humana.com",
+    "metlife.com",
+    "unitedhealthcare.com",
+    # Trade press and general news
+    "bdcmagazine.com",
+    "constructiondive.com",
+    "forbes.com",
+    "inc.com",
+    "entrepreneur.com",
+    "businessinsider.com",
+    "prnewswire.com",
+    "yahoo.com",
 )
+
+# Never a prospect, whatever the domain: government, education, military.
+NON_BUSINESS_TLDS = (".gov", ".edu", ".mil")
+
+# Search returns pages, not businesses. These titles belong to articles and
+# roundups about an industry rather than a company operating in it.
+LISTICLE_TITLE_RE = re.compile(
+    r"^\s*(top\b|best\b|what are\b|who are\b|how to\b|\d+\s+(best|top)\b)"
+    r"|\b(companies|contractors|providers|shops|businesses|dealers)\s+(in|near|for)\b"
+    r"|\bfor sale\b|\brankings?\b|\bdirectory\b|\bnear me\b|\bsell your\b",
+    re.I,
+)
+
+# Same idea, by URL shape.
+ARTICLE_PATH_PARTS = (
+    "/blog/",
+    "/news/",
+    "/article",
+    "/wiki/",
+    "/guide",
+    "/directory",
+    "/listings",
+    "/category/",
+    "/best-",
+    "/top-",
+)
+
+
+def is_non_business_host(url: str) -> bool:
+    host = normalize_domain(url)
+    return host.endswith(NON_BUSINESS_TLDS)
+
+
+def looks_like_listicle(url: str, title: str | None) -> bool:
+    """True when a result is an article or roundup rather than a company site."""
+    if title and LISTICLE_TITLE_RE.search(title):
+        return True
+    path = urlparse(url).path.lower()
+    return any(part in path for part in ARTICLE_PATH_PARTS)
 
 
 def sha256_text(value: str) -> str:
