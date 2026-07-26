@@ -177,13 +177,13 @@ def prospect_detail(
 
 
 @router.post("/admin/prospects/{prospect_id}/draft")
-def make_draft(request: Request, prospect_id: str) -> RedirectResponse:
+def make_draft(request: Request, prospect_id: str, regenerate: str = Form("")) -> RedirectResponse:
     if not is_authenticated(request):
         return _login_redirect()
     if not _valid_uuid(prospect_id):
         return _redirect("/admin/prospects", err="Invalid prospect id.")
     _ensure_schema()
-    result = OutreachOrchestrator().draft_prospect(prospect_id)
+    result = OutreachOrchestrator().draft_prospect(prospect_id, regenerate=bool(regenerate))
     dest = f"/admin/prospects/{prospect_id}"
     if result.get("ok"):
         return _redirect(dest, msg="Draft ready to review." if not result.get("reused") else "Draft already exists.")

@@ -310,6 +310,21 @@ def get_open_draft(prospect_id: str, catalog_version: str) -> dict[str, Any] | N
     return dict(row) if row else None
 
 
+def delete_open_draft(prospect_id: str, catalog_version: str) -> int:
+    """Discard unsent drafts so a fresh one can be composed. Only 'drafted'
+    rows are removed, so nothing that was sent is ever touched."""
+    with connection() as conn:
+        cursor = conn.execute(
+            """
+            DELETE FROM outreach_messages
+            WHERE prospect_id = %s AND catalog_version = %s AND status = 'drafted'
+            """,
+            (prospect_id, catalog_version),
+        )
+        conn.commit()
+        return cursor.rowcount
+
+
 def create_message(
     prospect_id: str,
     catalog_version: str,

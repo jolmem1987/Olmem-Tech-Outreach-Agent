@@ -53,15 +53,24 @@ class EmailComposer:
         if not {item.url for item in draft.evidence_used}.issubset(research_urls):
             raise RuntimeError("Draft attempted to use unsupported prospect evidence")
 
-        draft.text_body = (
-            draft.text_body.strip()
-            + f"\n\n{offer.call_to_action}: {offer.landing_url}"
-        )
+        # Append the link only. call_to_action is guidance for the model, which
+        # is already told to write one low-pressure ask in the prospect's own
+        # context - appending it as well put the instruction itself into the
+        # message ("Offer to send a short outline of...") after the model's own
+        # closing line.
+        draft.text_body = draft.text_body.strip() + f"\n\n{offer.landing_url}"
+
         escaped = html.escape(draft.text_body.strip()).replace("\n\n", "</p><p>").replace("\n", "<br>")
+        # Link the trailing URL, and only that one, so an address quoted earlier
+        # in the body is left as text.
+        escaped_url = html.escape(offer.landing_url)
         safe_url = html.escape(offer.landing_url, quote=True)
-        safe_cta = html.escape(offer.call_to_action)
-        # Replace the final plain URL line with one controlled link to the current site offer.
-        final_line = html.escape(f"{offer.call_to_action}: {offer.landing_url}")
-        escaped = escaped.replace(final_line, f'<a href="{safe_url}">{safe_cta}</a>')
+        index = escaped.rfind(escaped_url)
+        if index != -1:
+            escaped = (
+                escaped[:index]
+                + f'<a href="{safe_url}">{escaped_url}</a>'
+                + escaped[index + len(escaped_url):]
+            )
         draft.html_body = f"<p>{escaped}</p>"
         return draft

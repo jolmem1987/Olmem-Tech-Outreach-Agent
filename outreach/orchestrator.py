@@ -26,6 +26,7 @@ from outreach.repository import (
     mark_message_error,
     mark_message_failed,
     mark_message_sent,
+    delete_open_draft,
     delete_prospects,
     mark_rejected,
     mark_research_failed,
@@ -335,7 +336,7 @@ class OutreachOrchestrator:
         token = make_unsubscribe_token(email)
         return f"{self.settings.app_base_url}/api/unsubscribe/{token}"
 
-    def draft_prospect(self, prospect_id: str) -> dict[str, Any]:
+    def draft_prospect(self, prospect_id: str, regenerate: bool = False) -> dict[str, Any]:
         """Compose an outreach draft for one prospect and store it unsent.
 
         Approval needs something to approve. Drafts were previously only created
@@ -358,6 +359,8 @@ class OutreachOrchestrator:
         if offer is None:
             return {"ok": False, "error": "The prospect's selected offer is not in the active catalog."}
 
+        if regenerate:
+            delete_open_draft(prospect_id, catalog.catalog_version)
         existing = get_open_draft(prospect_id, catalog.catalog_version)
         if existing:
             return {"ok": True, "message_id": str(existing["id"]), "reused": True}

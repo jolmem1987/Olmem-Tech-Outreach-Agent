@@ -344,6 +344,9 @@ def prospect_detail_page(
             f'<form method="post" action="/admin/prospects/{esc(p["id"])}/send-draft" '
             f'onsubmit="return confirm(\'Send this email to {esc(email)} now?\')">'
             f'<button class="button"{"" if can_send else " disabled"}>Approve &amp; send this draft</button></form>'
+            f'<form method="post" action="/admin/prospects/{esc(p["id"])}/draft" style="margin-top:8px">'
+            f'<input type="hidden" name="regenerate" value="1">'
+            f'<button class="button secondary small">Discard and rewrite</button></form>'
             f'<p class="help">This exact text is sent, plus the compliance footer.</p>'
         )
     else:
