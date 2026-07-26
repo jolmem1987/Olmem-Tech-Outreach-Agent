@@ -149,6 +149,32 @@ def save_research_and_fit(
         conn.commit()
 
 
+def list_unresearched_prospects() -> list[dict[str, Any]]:
+    """Prospects that were discovered but never researched, so nothing is lost
+    by deleting them."""
+    with connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, company_name, website, domain
+            FROM outreach_prospects
+            WHERE status = 'discovered'
+            """
+        ).fetchall()
+    return list(rows)
+
+
+def delete_prospects(prospect_ids: list[str]) -> int:
+    if not prospect_ids:
+        return 0
+    with connection() as conn:
+        cursor = conn.execute(
+            "DELETE FROM outreach_prospects WHERE id = ANY(%s) AND status = 'discovered'",
+            (prospect_ids,),
+        )
+        conn.commit()
+        return cursor.rowcount
+
+
 def mark_rejected(prospect_id: str, reason: str) -> None:
     """Reject permanently. Unlike research_failed, this status is not re-queued."""
     with connection() as conn:

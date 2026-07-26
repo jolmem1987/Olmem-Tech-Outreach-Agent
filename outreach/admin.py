@@ -121,6 +121,7 @@ def run_job(request: Request, job: str) -> RedirectResponse:
         "catalog-import": "import_catalog",
         "catalog": "refresh_catalog",
         "discover": "discover_prospects",
+        "purge": "purge_blocked_prospects",
         "research": "research_and_score",
         "send": "send_eligible",
     }.get(job)

@@ -223,6 +223,7 @@ def dashboard_page(stats: dict[str, Any], msg: str | None = None, err: str | Non
             ("catalog-import", "Import catalog from file"),
             ("catalog", "Crawl site &amp; rebuild catalog"),
             ("discover", "Discover prospects"),
+            ("purge", "Purge blocked prospects"),
             ("research", "Research &amp; score"),
             ("send", "Run send job"),
         ]

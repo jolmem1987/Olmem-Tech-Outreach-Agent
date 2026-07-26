@@ -19,9 +19,11 @@ from outreach.repository import (
     get_prospect,
     get_prospects_for_research,
     is_suppressed,
+    list_unresearched_prospects,
     mark_message_error,
     mark_message_failed,
     mark_message_sent,
+    delete_prospects,
     mark_rejected,
     mark_research_failed,
     save_catalog,
@@ -33,6 +35,11 @@ from outreach.scoring import FitScorer
 from outreach.sender import SendGridSender
 from outreach.suppression import make_unsubscribe_token
 from outreach.sync import sync_to_admin
+from outreach.util import (
+    is_blocked_platform,
+    is_non_business_host,
+    looks_like_listicle,
+)
 
 
 LOCK_IDS = {
@@ -98,6 +105,27 @@ class OutreachOrchestrator:
             candidates = ProspectDiscovery().discover(catalog)
             inserted = sum(1 for candidate in candidates if upsert_candidate(candidate))
             return {"ok": True, "found": len(candidates), "inserted": inserted}
+
+    def purge_blocked_prospects(self) -> dict[str, Any]:
+        """Delete already-stored prospects the current filters would now reject.
+
+        Discovery filters at insert time, so tightening the rules leaves earlier
+        junk sitting in the queue - and research pays a crawl for each one. Only
+        prospects still at 'discovered' are touched, so nothing researched or
+        scored is ever lost.
+        """
+        rows = list_unresearched_prospects()
+        doomed: list[str] = []
+        for row in rows:
+            website = row["website"] or ""
+            if (
+                is_blocked_platform(website)
+                or is_non_business_host(website)
+                or looks_like_listicle(website, row.get("company_name"))
+            ):
+                doomed.append(row["id"])
+        deleted = delete_prospects(doomed)
+        return {"ok": True, "examined": len(rows), "deleted": deleted}
 
     def research_and_score(self) -> dict[str, Any]:
         with job_lock(LOCK_IDS["research"]) as locked:
