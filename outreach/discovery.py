@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import zip_longest
 from urllib.parse import urlparse
 
 import httpx
@@ -17,12 +18,20 @@ class ProspectDiscovery:
         self.regions = [item.strip() for item in regions_raw.split(",") if item.strip()]
 
     def _queries(self, catalog: OfferCatalog) -> list[str]:
-        queries: list[str] = []
+        """Build the search queries, interleaved so truncation stays fair.
+
+        The list is capped, and building it offer-by-offer meant the cap fell
+        entirely on the last offers - with six offers and four regions, the tail
+        of the catalog was never searched at all. Round-robin instead, so every
+        offer keeps its best queries and the cap trims each of them evenly.
+        """
+        per_offer: list[list[str]] = []
         for offer in catalog.offers:
             bases = offer.search_queries or offer.ideal_customer_signals[:3]
-            for base in bases:
-                for region in self.regions:
-                    queries.append(f"{base} {region} business")
+            per_offer.append(
+                [f"{base} {region} business" for base in bases for region in self.regions]
+            )
+        queries = [query for row in zip_longest(*per_offer) for query in row if query]
         return list(dict.fromkeys(queries))[: max(10, self.settings.max_discoveries_per_run * 2)]
 
     def _from_feed(self) -> list[Candidate]:

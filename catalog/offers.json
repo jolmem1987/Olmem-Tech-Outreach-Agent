@@ -1,25 +1,29 @@
 {
   "_comment": [
-    "Hand-maintained offer catalog, imported by the 'Import catalog from file' button",
-    "in /admin. Built from the olmem-tech repo: lib/site-content.ts (pricingPlans,",
-    "chatbotOption, workflowCmsOptions, subscriptionPlans) and the PACKAGES map in",
-    "app/api/stripe/checkout/route.ts, which hold the authoritative names and amounts.",
+    "Hand-maintained offer catalog, activated by the 'Import catalog from file' button",
+    "in /admin. Built from the olmem-tech repo's authoritative definitions:",
+    "lib/site-content.ts (pricingPlans, chatbotOption, workflowCmsOptions) and the",
+    "PACKAGES map in app/api/stripe/checkout/route.ts, which hold the real names and",
+    "amounts charged by Stripe.",
     "",
-    "Importing this costs nothing - no crawl, no LLM call. Edit it here when the site's",
-    "offers change, then click Import again. Every claim in allowed_claims must be",
-    "verifiable on the page listed in evidence_urls; the drafting step may not exceed them.",
+    "Importing costs nothing - no crawl, no LLM call. When the site's offers change,",
+    "edit this file and click Import again. The catalog version hashes these offers, so",
+    "an edit forces affected prospects to be rescored rather than pitched a stale offer.",
     "",
-    "search_queries are the discovery seeds. Each is combined as",
-    "'{query} {region} business' for every region in DISCOVERY_REGIONS, deduped, then",
-    "truncated to max(10, MAX_DISCOVERIES_PER_RUN * 2). At 4 offers x 3 queries x 4",
-    "regions = 48 candidates against a cap of 40, so the last offer is partly cut off.",
-    "Raise MAX_DISCOVERIES_PER_RUN to 25 for full coverage."
+    "Every entry in allowed_claims must be verifiable on a page in evidence_urls. The",
+    "drafting step may not exceed them.",
+    "",
+    "search_queries are the discovery seeds, combined as '{query} {region} business' for",
+    "each region in DISCOVERY_REGIONS. The combined list is interleaved across offers and",
+    "then truncated to max(10, MAX_DISCOVERIES_PER_RUN * 2). At 6 offers x 3 queries x 4",
+    "regions = 72 against a cap of 40, roughly half are dropped - but interleaving means",
+    "every offer still gets searched. Raise MAX_DISCOVERIES_PER_RUN to 36 for everything."
   ],
   "offers": [
     {
       "offer_key": "contractor-website",
-      "name": "Contractor Website Build",
-      "summary": "Flat-rate contractor website builds from $1,500 to $5,000. Mobile-first and conversion-focused, with a CMS and admin dashboard, an AI chatbot, and the first year of hosting included.",
+      "name": "Contractor Website",
+      "summary": "A $1,500 flat-rate website for contractors and service businesses. Up to 5 pages, mobile-first, built around a quote request funnel, with a CMS and admin dashboard, an AI chatbot, and the first year of hosting included.",
       "problems_solved": [
         "The business has no website, only a social media page or a directory listing",
         "The existing site is not mobile friendly",
@@ -41,24 +45,115 @@
         "Site displays a recent redesign or launch announcement"
       ],
       "allowed_claims": [
-        "The Starter Contractor Website is $1,500 flat rate and covers up to 5 pages",
-        "The Growth Contractor Website is $3,500 flat rate and typically covers 8-12 pages",
-        "The Premium Contractor Website is $5,000 flat rate and covers up to 20 conversion-focused pages",
+        "The Contractor Website package is $1,500 flat rate and covers up to 5 pages",
+        "It includes a conversion-focused page structure, mobile-first design, and a quote request funnel",
+        "Local SEO-ready setup is included",
+        "A content management system and admin dashboard are included at no extra cost",
+        "An AI chatbot is included at no extra cost",
         "Hosting is free for the first year, then $35 per month",
-        "A content management system and admin dashboard are included",
-        "An AI chatbot is included with every website package",
-        "Optional maintenance is $100 per month"
+        "Maintenance is optional at $100 per month"
       ],
       "call_to_action": "Offer to send a short outline of what a lead-ready site would cover for their specific trade and service area.",
-      "landing_url": "https://www.olmemtech.com/pricing",
+      "landing_url": "https://www.olmemtech.com/website-starter",
       "evidence_urls": [
-        "https://www.olmemtech.com/pricing",
-        "https://www.olmemtech.com/websites"
+        "https://www.olmemtech.com/website-starter",
+        "https://www.olmemtech.com/pricing"
       ],
       "search_queries": [
         "roofing contractor",
         "hvac contractor",
         "plumbing contractor"
+      ]
+    },
+    {
+      "offer_key": "automotive-marketplace-website",
+      "name": "Automotive & Marketplace Website",
+      "summary": "A $3,500 flat-rate website for automotive parts sellers and marketplace-style stores that need supplier API connections and a catalog-aware CMS, including vehicle fitment and a garage selector, not just pages.",
+      "problems_solved": [
+        "Product catalog and inventory are maintained by hand in more than one place",
+        "Customers cannot check whether a part fits their vehicle",
+        "Supplier pricing and stock are not reflected on the website",
+        "The store depends on a middleware subscription to connect supplier data",
+        "Catalog pages have no search, filtering, or fitment lookup"
+      ],
+      "ideal_customer_signals": [
+        "Automotive parts, accessories, or performance retailer with an online catalog",
+        "Marketplace-style store carrying supplier-sourced product data",
+        "Pages that instruct customers to call to confirm fitment or availability",
+        "Product listings with no vehicle fitment or year/make/model filter",
+        "Visible signs of stale inventory or pricing on the site"
+      ],
+      "exclusion_signals": [
+        "The store already runs a modern catalog with working fitment search",
+        "The business sells ecommerce or catalog integration services itself",
+        "No product catalog to manage"
+      ],
+      "allowed_claims": [
+        "The Automotive & Marketplace Website package is $3,500 flat rate",
+        "It includes everything in the Contractor Website package",
+        "Product catalog and marketplace architecture are included",
+        "Supplier API connections are supported, including OAuth2, API key, and bearer token",
+        "An automotive CMS with vehicle fitment and a garage selector is included",
+        "Catalog, inventory, and pricing data sync is included",
+        "An AI chatbot and admin dashboard are included at no extra cost",
+        "Hosting is free for the first year, then $35 per month"
+      ],
+      "call_to_action": "Offer to review how their catalog and supplier data are maintained today and where a fitment-aware CMS would remove duplicate work.",
+      "landing_url": "https://www.olmemtech.com/website-business",
+      "evidence_urls": [
+        "https://www.olmemtech.com/website-business",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "search_queries": [
+        "auto parts store",
+        "truck accessories retailer",
+        "performance parts shop"
+      ]
+    },
+    {
+      "offer_key": "enterprise-website",
+      "name": "Enterprise Website",
+      "summary": "A $5,000 flat-rate website for established organizations running multi-location, multi-brand, or multi-system operations that need the site wired into the rest of the business, including CRM and ERP integrations.",
+      "problems_solved": [
+        "Multiple locations or brands are crammed into a site built for one",
+        "The website is disconnected from the CRM or ERP the business actually runs on",
+        "No structured SEO architecture across locations or service lines",
+        "One shared login for a site that several staff need to maintain",
+        "Lead handling is manual because nothing is integrated"
+      ],
+      "ideal_customer_signals": [
+        "Organization listing several locations, branches, or brands",
+        "Site referencing an ERP, CRM, or internal ordering system",
+        "Distinct divisions or service lines sharing one thin website",
+        "Careers or dealer pages implying real operational scale",
+        "Location pages that are near-duplicates of one another"
+      ],
+      "exclusion_signals": [
+        "Single-location business with no integration needs",
+        "Corporate site clearly maintained by an in-house web team",
+        "The business is itself a software or systems integration firm"
+      ],
+      "allowed_claims": [
+        "The Enterprise Website package is $5,000 flat rate",
+        "It includes everything in the Automotive & Marketplace package",
+        "Multi-location and multi-brand architecture is included",
+        "Advanced SEO architecture and schema are included",
+        "Advanced CMS modules and multi-user admin roles are included",
+        "Advanced chatbot training and lead-qualification flows are included",
+        "CRM, ERP, and automation integrations are supported",
+        "Three months of maintenance and support are included free",
+        "Hosting is free for the first year, then $35 per month"
+      ],
+      "call_to_action": "Offer a short call to map which systems the site would need to connect to before quoting anything.",
+      "landing_url": "https://www.olmemtech.com/website-premium",
+      "evidence_urls": [
+        "https://www.olmemtech.com/website-premium",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "search_queries": [
+        "multi location dealership",
+        "wholesale distributor",
+        "manufacturing company"
       ]
     },
     {
@@ -85,6 +180,7 @@
       "allowed_claims": [
         "The Smart Chat Bot is $500 one-time for a site the business already has",
         "It provides 24/7 lead capture and FAQ responses",
+        "It runs lead qualification conversation flows",
         "It is trained on the business's own services and FAQs",
         "Website integration is included",
         "It is included at no extra cost with every Olmem Tech website package"
@@ -135,15 +231,15 @@
         "https://www.olmemtech.com/pricing"
       ],
       "search_queries": [
-        "wholesale distributor",
         "property management company",
-        "equipment rental company"
+        "equipment rental company",
+        "commercial cleaning company"
       ]
     },
     {
       "offer_key": "cms-integrations",
       "name": "CMS and Integrations",
-      "summary": "A custom content management system with supplier and API integrations, including catalog, fitment, or product data sync. A $99 planning deposit covers the initial planning session, with final scope quoted after review.",
+      "summary": "A custom content management system with supplier and API integrations, including fitment, catalog, or product data sync, for a site the business already has. A $99 planning deposit covers the initial planning session.",
       "problems_solved": [
         "Staff cannot update site content without a developer",
         "Product, catalog, or inventory data is maintained by hand in more than one place",
@@ -174,9 +270,9 @@
         "https://www.olmemtech.com/pricing"
       ],
       "search_queries": [
-        "auto parts supplier",
         "building supply company",
-        "industrial equipment dealer"
+        "industrial equipment dealer",
+        "hvac supply distributor"
       ]
     }
   ]
