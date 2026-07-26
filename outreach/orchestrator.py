@@ -20,6 +20,7 @@ from outreach.repository import (
     get_prospects_for_research,
     is_suppressed,
     list_unresearched_prospects,
+    requeue_rejected,
     mark_message_error,
     mark_message_failed,
     mark_message_sent,
@@ -140,6 +141,14 @@ class OutreachOrchestrator:
         deleted = delete_prospects(doomed)
         return {"ok": True, "examined": len(rows), "deleted": deleted}
 
+    def requeue_rejected_prospects(self) -> dict[str, Any]:
+        """Send every rejected prospect back through research and scoring.
+
+        Rejection is terminal, so a lowered threshold or a corrected catalog
+        would otherwise never be applied to anything already judged.
+        """
+        return {"ok": True, "requeued": requeue_rejected()}
+
     def research_and_score(self) -> dict[str, Any]:
         with job_lock(LOCK_IDS["research"]) as locked:
             if not locked:
@@ -166,6 +175,7 @@ class OutreachOrchestrator:
                         fit,
                         catalog.catalog_version,
                         decision.eligible,
+                        decision.reasons,
                     )
                     sync_to_admin(
                         "lead_scored",

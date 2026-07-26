@@ -201,7 +201,12 @@ def _stat(label: str, value: Any) -> str:
     return f'<div class="stat"><span>{esc(label)}</span><strong>{esc(value)}</strong></div>'
 
 
-def dashboard_page(stats: dict[str, Any], msg: str | None = None, err: str | None = None) -> str:
+def dashboard_page(
+    stats: dict[str, Any],
+    rejection_reasons: list[dict[str, Any]] | None = None,
+    msg: str | None = None,
+    err: str | None = None,
+) -> str:
     totals = stats.get("totals", {})
     by_status = stats.get("by_status", {})
     catalog = stats.get("catalog")
@@ -224,10 +229,16 @@ def dashboard_page(stats: dict[str, Any], msg: str | None = None, err: str | Non
             ("catalog", "Crawl site &amp; rebuild catalog"),
             ("discover", "Discover prospects"),
             ("purge", "Purge blocked prospects"),
+            ("requeue", "Re-queue rejected"),
             ("research", "Research &amp; score"),
             ("send", "Run send job"),
         ]
     )
+
+    reason_rows = "".join(
+        f"<tr><td>{esc(row['reason'])}</td><td style=\"text-align:right\">{esc(row['c'])}</td></tr>"
+        for row in (rejection_reasons or [])
+    ) or '<tr><td colspan="2" class="muted">Nothing rejected yet.</td></tr>'
 
     body = f"""
     {_flash(msg, err)}
@@ -240,7 +251,10 @@ def dashboard_page(stats: dict[str, Any], msg: str | None = None, err: str | Non
     </div>
     <div class="grid2">
       <div class="card"><h2>Prospects by status</h2>
-        <table class="table"><tbody>{status_rows}</tbody></table></div>
+        <table class="table"><tbody>{status_rows}</tbody></table>
+        <h3 style="margin-top:22px">Why prospects are rejected</h3>
+        <p class="help">Each gate condition a rejected prospect failed. One prospect can fail several. Use this to decide what to relax on the Criteria page.</p>
+        <table class="table"><tbody>{reason_rows}</tbody></table></div>
       <div class="card"><h2>Active offer catalog</h2>{catalog_html}
         <h3 style="margin-top:18px">Run a job now</h3>
         <p class="help">Manually trigger a pipeline step instead of waiting for the daily schedule. These can take a while (they call the LLM).</p>

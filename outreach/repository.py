@@ -111,8 +111,17 @@ def save_research_and_fit(
     fit: FitAssessment,
     catalog_version: str,
     eligible: bool,
+    reasons: list[str] | None = None,
 ) -> None:
+    """Store the research, the fit, and why the gate decided as it did.
+
+    The gate reasons were previously only sent to the admin webhook, so a
+    rejected prospect kept its score but lost the explanation - leaving no way
+    to tell whether the threshold, the evidence, or the contact was the problem.
+    """
     status = "eligible" if eligible else "rejected"
+    fit_payload = fit.model_dump()
+    fit_payload["gate_reasons"] = list(reasons or [])
     with connection() as conn:
         conn.execute(
             """
@@ -141,12 +150,57 @@ def save_research_and_fit(
                 research.business_email_source_url,
                 fit.selected_offer_key,
                 fit.total_score,
-                json_dumps(fit.model_dump()),
+                json_dumps(fit_payload),
                 catalog_version,
                 prospect_id,
             ),
         )
         conn.commit()
+
+
+def rejection_reason_counts(limit: int = 12) -> list[dict[str, Any]]:
+    """Why prospects are being rejected, most common first."""
+    with connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT reason, COUNT(*) AS c
+            FROM (
+                SELECT jsonb_array_elements_text(fit_json -> 'gate_reasons') AS reason
+                FROM outreach_prospects
+                WHERE status = 'rejected'
+                  AND jsonb_typeof(fit_json -> 'gate_reasons') = 'array'
+                UNION ALL
+                SELECT fit_json ->> 'rejected_reason' AS reason
+                FROM outreach_prospects
+                WHERE status = 'rejected'
+                  AND jsonb_typeof(fit_json -> 'rejected_reason') = 'string'
+            ) reasons
+            GROUP BY reason
+            ORDER BY c DESC
+            LIMIT %s
+            """,
+            (limit,),
+        ).fetchall()
+    return list(rows)
+
+
+def requeue_rejected() -> int:
+    """Send rejected prospects back for rescoring.
+
+    Rejection is terminal - get_prospects_for_research never picks those rows up
+    again - so lowering a threshold or fixing the catalog would otherwise have no
+    effect on anything already judged.
+    """
+    with connection() as conn:
+        cursor = conn.execute(
+            """
+            UPDATE outreach_prospects
+            SET status = 'needs_rescore', updated_at = NOW()
+            WHERE status = 'rejected'
+            """
+        )
+        conn.commit()
+        return cursor.rowcount
 
 
 def list_unresearched_prospects() -> list[dict[str, Any]]:

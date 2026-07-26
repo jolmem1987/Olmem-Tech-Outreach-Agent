@@ -32,6 +32,7 @@ from outreach.repository import (
     list_messages,
     list_prospects,
     message_status_counts,
+    rejection_reason_counts,
 )
 
 router = APIRouter()
@@ -110,7 +111,11 @@ def dashboard(request: Request, msg: str | None = Query(None), err: str | None =
     if not is_authenticated(request):
         return _login_redirect()
     _ensure_schema()
-    return _html(adminui.dashboard_page(dashboard_stats(), msg=msg, err=err))
+    return _html(
+        adminui.dashboard_page(
+            dashboard_stats(), rejection_reasons=rejection_reason_counts(), msg=msg, err=err
+        )
+    )
 
 
 @router.post("/admin/jobs/{job}")
@@ -122,6 +127,7 @@ def run_job(request: Request, job: str) -> RedirectResponse:
         "catalog": "refresh_catalog",
         "discover": "discover_prospects",
         "purge": "purge_blocked_prospects",
+        "requeue": "requeue_rejected_prospects",
         "research": "research_and_score",
         "send": "send_eligible",
     }.get(job)
