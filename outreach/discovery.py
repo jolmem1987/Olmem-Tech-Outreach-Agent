@@ -37,6 +37,8 @@ class ProspectDiscovery:
         """
         per_offer: list[tuple[int, list[str]]] = []
         for offer in catalog.offers:
+            if offer.discovery_weight == 0:  # parked: still sellable, not searched for
+                continue
             bases = offer.search_queries or offer.ideal_customer_signals[:3]
             if offer.region_scoped and self.regions:
                 queries = [f"{base} {region} business" for base in bases for region in self.regions]

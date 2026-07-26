@@ -21,11 +21,15 @@
     "                     returns the local retail counter instead of the ecommerce store.",
     "  discovery_weight - share of each run's query budget. Region-scoped offers generate",
     "                     hundreds of queries and would otherwise crowd out a national",
-    "                     offer that needs only a dozen. Parts ecommerce is weighted",
     "                     highest because it is the primary target.",
     "",
     "Each run takes max(10, MAX_DISCOVERIES_PER_RUN * 2) queries, split by weight and",
-    "rotated by date, so consecutive runs explore different parts of the space."
+    "rotated by date, so consecutive runs explore different parts of the space.",
+    "",
+    "Current focus: contractors with a thin or outdated site. The parts ecommerce",
+    "offers are parked at discovery_weight 0 - still in the catalog and still",
+    "pitchable, but no discovery budget is spent looking for them. Set them back to",
+    "3-4 when you are ready to work that market."
   ],
   "offers": [
     {
@@ -33,18 +37,24 @@
       "name": "Contractor Website",
       "summary": "A $1,500 flat-rate website for contractors and service businesses. Up to 5 pages, mobile-first, built around a quote request funnel, with a CMS and admin dashboard, an AI chatbot, and the first year of hosting included.",
       "problems_solved": [
-        "The business has no website, only a social media page or a directory listing",
+        "The business has no real website, only a social media page or a directory listing",
         "The existing site is not mobile friendly",
         "There is no quote request form, so enquiries only arrive by phone",
         "Service and location pages are missing, so the site does not surface in local search",
-        "The owner cannot edit their own content without calling a developer"
+        "The owner cannot edit their own content without calling a developer",
+        "The site looks dated enough that it costs the company credibility against competitors"
       ],
       "ideal_customer_signals": [
         "Licensed trade contractor serving a defined local service area",
         "Website with no quote form or contact form",
         "Site content or copyright date that has not been updated in several years",
         "A Facebook page listed as the business website",
-        "Single-page site with no individual service pages"
+        "Single-page site with no individual service pages",
+        "Site hosted on a free website-builder subdomain rather than an owned domain",
+        "No SSL certificate, so the site is served over plain http",
+        "Template site still carrying placeholder text or stock-only imagery",
+        "Contact page listing only a phone number, with no form and no email",
+        "No photographs of the company's own completed work"
       ],
       "exclusion_signals": [
         "Site is already modern, mobile friendly, and has a clear quote funnel",
@@ -73,11 +83,35 @@
         "plumbing contractor",
         "electrical contractor",
         "concrete contractor",
+        "masonry contractor",
         "remodeling contractor",
+        "kitchen and bath remodeler",
+        "deck builder",
+        "siding contractor",
+        "gutter installation company",
+        "window replacement company",
+        "garage door company",
+        "fencing contractor",
         "landscaping company",
-        "siding and gutter contractor"
+        "tree service company",
+        "excavating contractor",
+        "asphalt paving contractor",
+        "drywall contractor",
+        "painting contractor",
+        "flooring contractor",
+        "insulation contractor",
+        "chimney sweep company",
+        "septic service company",
+        "well drilling company",
+        "pressure washing company",
+        "handyman service",
+        "pool installation company",
+        "family owned roofing contractor",
+        "family owned hvac contractor",
+        "licensed and insured plumbing contractor",
+        "local concrete contractor"
       ],
-      "discovery_weight": 2
+      "discovery_weight": 8
     },
     {
       "offer_key": "automotive-marketplace-website",
@@ -133,7 +167,7 @@
         "OEM replacement parts online store",
         "auto parts catalog website with fitment search"
       ],
-      "discovery_weight": 4
+      "discovery_weight": 0
     },
     {
       "offer_key": "enterprise-website",
@@ -311,7 +345,7 @@
         "marine parts online store",
         "replacement parts catalog website"
       ],
-      "discovery_weight": 3
+      "discovery_weight": 0
     }
   ]
 }

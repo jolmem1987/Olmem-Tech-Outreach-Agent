@@ -37,7 +37,11 @@ class Offer(BaseModel):
     # Share of each discovery run's query budget, relative to the other offers.
     # Region-scoped offers generate hundreds of queries and would otherwise
     # crowd out a national offer that needs only a dozen.
-    discovery_weight: int = Field(default=1, ge=1, le=10)
+    #
+    # Zero parks an offer: no discovery budget is spent looking for it, but it
+    # stays in the catalog and can still be matched and pitched to a prospect
+    # found some other way. Use it for a market you are not ready to work yet.
+    discovery_weight: int = Field(default=1, ge=0, le=10)
 
 
 class OfferCatalog(BaseModel):
