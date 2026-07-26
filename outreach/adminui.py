@@ -309,7 +309,13 @@ def _json_block(value: Any) -> str:
         return f"<pre>{esc(value)}</pre>"
 
 
-def prospect_detail_page(p: dict[str, Any], messages: list[dict[str, Any]], msg: str | None = None, err: str | None = None) -> str:
+def prospect_detail_page(
+    p: dict[str, Any],
+    messages: list[dict[str, Any]],
+    draft: dict[str, Any] | None = None,
+    msg: str | None = None,
+    err: str | None = None,
+) -> str:
     research = p.get("research_json") or {}
     fit = p.get("fit_json") or {}
     email = p.get("contact_email")
@@ -328,11 +334,24 @@ def prospect_detail_page(p: dict[str, Any], messages: list[dict[str, Any]], msg:
     if not msg_rows:
         msg_rows = '<tr><td colspan="4" class="muted">No emails yet.</td></tr>'
 
-    send_draft = (
-        f'<form method="post" action="/admin/prospects/{esc(p["id"])}/send-draft" '
-        f'onsubmit="return confirm(\'Send the AI-drafted outreach email to {esc(email)} now?\')">'
-        f'<button class="button"{"" if can_send else " disabled"}>Approve &amp; send AI draft now</button></form>'
-    )
+    if draft:
+        # Show the stored text and send exactly it, so approval means approving
+        # what is on screen rather than whatever a fresh compose returns.
+        send_draft = (
+            f'<div class="field"><label>Subject</label>'
+            f'<input value="{esc(draft.get("subject"))}" readonly></div>'
+            f'<div class="field"><label>Body</label><pre>{esc(draft.get("text_body"))}</pre></div>'
+            f'<form method="post" action="/admin/prospects/{esc(p["id"])}/send-draft" '
+            f'onsubmit="return confirm(\'Send this email to {esc(email)} now?\')">'
+            f'<button class="button"{"" if can_send else " disabled"}>Approve &amp; send this draft</button></form>'
+            f'<p class="help">This exact text is sent, plus the compliance footer.</p>'
+        )
+    else:
+        send_draft = (
+            f'<form method="post" action="/admin/prospects/{esc(p["id"])}/draft">'
+            f'<button class="button secondary"{"" if can_send else " disabled"}>Generate draft to review</button></form>'
+            f'<p class="help">Writes the outreach email and stores it unsent, so you can read it first.</p>'
+        )
     reason = "" if can_send else '<p class="help">Available once the prospect is researched, scored, has a verified email, and a selected offer.</p>'
 
     body = f"""
@@ -350,7 +369,7 @@ def prospect_detail_page(p: dict[str, Any], messages: list[dict[str, Any]], msg:
         <p><strong>Observed problems:</strong></p><ul>{problems_html}</ul>
       </div>
       <div class="card"><h2>Send an email</h2>
-        <h3>Approve the AI draft</h3>
+        <h3>AI draft</h3>
         {send_draft}{reason}
         <h3 style="margin-top:20px">Custom message</h3>
         <form method="post" action="/admin/prospects/{esc(p['id'])}/send-custom">
