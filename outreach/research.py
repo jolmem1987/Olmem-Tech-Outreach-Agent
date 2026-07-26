@@ -47,11 +47,26 @@ no meaningful match.
 """
 
 
+class NoPublicContact(RuntimeError):
+    """The site publishes no usable business email.
+
+    A permanent disqualification, not a transient failure: the send gate requires
+    a verified public address, so no amount of retrying changes the outcome.
+    """
+
+
 class ProspectResearcher:
     def __init__(self) -> None:
         self.settings = get_settings()
         self.allow_named_public_emails = get_criteria()["allow_named_public_emails"]
         self.llm = StructuredLLM()
+
+    def _is_usable_email(self, email: str) -> bool:
+        local_part = email.split("@", 1)[0]
+        is_generic = local_part in GENERIC_LOCAL_PARTS or any(
+            local_part.startswith(f"{prefix}+") for prefix in GENERIC_LOCAL_PARTS
+        )
+        return is_generic or self.allow_named_public_emails
 
     @staticmethod
     def _packet(pages: list[SitePage], emails: dict[str, str]) -> str:
@@ -70,6 +85,13 @@ class ProspectResearcher:
             crawler.close()
         if not pages:
             raise RuntimeError("No public website pages could be researched")
+
+        # Bail before the model runs. Research and scoring are two LLM calls per
+        # prospect, and without a usable published address the gate rejects the
+        # prospect regardless of what they return. Contractor sites frequently
+        # list a phone number and nothing else, so this is a common case.
+        if not any(self._is_usable_email(email) for email in emails):
+            raise NoPublicContact("No usable business email is published on the website")
 
         research = self.llm.parse(
             instructions=RESEARCH_INSTRUCTIONS,
@@ -95,11 +117,7 @@ class ProspectResearcher:
         if research.business_email:
             email = research.business_email.lower().strip()
             source = emails.get(email)
-            local_part = email.split("@", 1)[0]
-            is_generic = local_part in GENERIC_LOCAL_PARTS or any(
-                local_part.startswith(f"{prefix}+") for prefix in GENERIC_LOCAL_PARTS
-            )
-            if source is None or (not self.allow_named_public_emails and not is_generic):
+            if source is None or not self._is_usable_email(email):
                 research.business_email = None
                 research.business_email_source_url = None
             else:

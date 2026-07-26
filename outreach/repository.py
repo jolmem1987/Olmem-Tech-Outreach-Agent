@@ -149,6 +149,22 @@ def save_research_and_fit(
         conn.commit()
 
 
+def mark_rejected(prospect_id: str, reason: str) -> None:
+    """Reject permanently. Unlike research_failed, this status is not re-queued."""
+    with connection() as conn:
+        conn.execute(
+            """
+            UPDATE outreach_prospects
+            SET status = 'rejected',
+                fit_json = jsonb_build_object('rejected_reason', %s),
+                updated_at = NOW()
+            WHERE id = %s
+            """,
+            (reason[:1000], prospect_id),
+        )
+        conn.commit()
+
+
 def mark_research_failed(prospect_id: str, reason: str) -> None:
     with connection() as conn:
         conn.execute(

@@ -22,12 +22,13 @@ from outreach.repository import (
     mark_message_error,
     mark_message_failed,
     mark_message_sent,
+    mark_rejected,
     mark_research_failed,
     save_catalog,
     save_research_and_fit,
     upsert_candidate,
 )
-from outreach.research import ProspectResearcher
+from outreach.research import NoPublicContact, ProspectResearcher
 from outreach.scoring import FitScorer
 from outreach.sender import SendGridSender
 from outreach.suppression import make_unsubscribe_token
@@ -110,6 +111,7 @@ class OutreachOrchestrator:
             rows = get_prospects_for_research(self.settings.max_research_per_run)
             eligible = 0
             rejected = 0
+            no_contact = 0
             failed = 0
             for row in rows:
                 prospect_id = str(row["id"])
@@ -145,6 +147,10 @@ class OutreachOrchestrator:
                         eligible += 1
                     else:
                         rejected += 1
+                except NoPublicContact as exc:
+                    # Permanent, and caught before either LLM call ran.
+                    mark_rejected(prospect_id, str(exc))
+                    no_contact += 1
                 except Exception as exc:
                     mark_research_failed(prospect_id, str(exc))
                     failed += 1
@@ -153,6 +159,7 @@ class OutreachOrchestrator:
                 "processed": len(rows),
                 "eligible": eligible,
                 "rejected": rejected,
+                "no_public_email": no_contact,
                 "failed": failed,
             }
 
