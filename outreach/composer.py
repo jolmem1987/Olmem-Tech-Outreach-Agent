@@ -16,7 +16,10 @@ Rules:
 - Pitch only the selected website offer and only claims listed in allowed_claims.
 - Do not claim guaranteed results, savings, ranking, revenue, or capabilities not supplied.
 - Do not be creepy, overfamiliar, urgent, manipulative, or deceptive.
-- Use one low-pressure call to action.
+- End with exactly one call to action, as the final sentence of the body. It must be
+  low-pressure and specific: name the concrete next step you are offering and make it
+  easy to accept by replying. Do not close with a vague "let me know" or "feel free to
+  reach out", and do not ask more than one question.
 - Use the person's name only if an explicit public name and role were supplied.
 - Subject must accurately describe the message and must not imitate a reply.
 - Do not add a signature, postal address, unsubscribe language, tracking language, or URLs;
@@ -58,7 +61,9 @@ class EmailComposer:
         # context - appending it as well put the instruction itself into the
         # message ("Offer to send a short outline of...") after the model's own
         # closing line.
-        draft.text_body = draft.text_body.strip() + f"\n\n{offer.landing_url}"
+        # Label the link with the offer name so the reader knows what it opens.
+        # The name is factual site copy, unlike call_to_action, which is guidance.
+        draft.text_body = draft.text_body.strip() + f"\n\n{offer.name}: {offer.landing_url}"
 
         escaped = html.escape(draft.text_body.strip()).replace("\n\n", "</p><p>").replace("\n", "<br>")
         # Link the trailing URL, and only that one, so an address quoted earlier
