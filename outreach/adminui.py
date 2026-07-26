@@ -309,10 +309,117 @@ def _json_block(value: Any) -> str:
         return f"<pre>{esc(value)}</pre>"
 
 
+_COMPONENT_LABELS = {
+    "problem_evidence": "Problem evidence",
+    "offer_alignment": "Offer alignment",
+    "customer_fit": "Customer fit",
+    "contact_quality": "Contact quality",
+    "timing_signal": "Timing signal",
+}
+
+
+def _brief(
+    p: dict[str, Any],
+    research: dict[str, Any],
+    fit: dict[str, Any],
+    offer: dict[str, Any] | None,
+    weights: dict[str, Any] | None,
+) -> str:
+    """The case for contacting this prospect, written out from stored research.
+
+    Everything here was already paid for during scoring, so reading it and
+    writing the email by hand costs nothing further.
+    """
+    if not research or not fit:
+        return '<p class="muted">Not researched yet. Run "Research &amp; score" first.</p>'
+
+    components = fit.get("components") or {}
+    weights = weights or {}
+    rows = ""
+    for key, label in _COMPONENT_LABELS.items():
+        got = components.get(key)
+        cap = weights.get(key)
+        if got is None:
+            continue
+        share = f"{esc(got)} / {esc(cap)}" if cap is not None else esc(got)
+        rows += f"<tr><td>{label}</td><td style=\"text-align:right\">{share}</td></tr>"
+    total = p.get("fit_score")
+    cap_total = sum(int(v) for v in weights.values()) if weights else None
+    rows += (
+        f'<tr><td><strong>Total</strong></td><td style="text-align:right"><strong>'
+        f'{esc(total)}{" / " + esc(cap_total) if cap_total else ""}</strong></td></tr>'
+    )
+
+    def bullets(items: Any, empty: str) -> str:
+        return "".join(f"<li>{esc(x)}</li>" for x in (items or [])) or f'<li class="muted">{empty}</li>'
+
+    evidence = fit.get("evidence") or research.get("evidence") or []
+    ev_html = "".join(
+        f'<li>&ldquo;{esc(e.get("quote_or_fact"))}&rdquo;<br>'
+        f'<a href="{esc(e.get("url"))}" target="_blank" rel="noopener">{esc(e.get("url"))}</a></li>'
+        for e in evidence
+    ) or '<li class="muted">No evidence recorded</li>'
+
+    email = p.get("contact_email")
+    email_source = p.get("contact_email_source_url")
+    contact_bits = [f"<strong>{esc(email or 'No verified address')}</strong>"]
+    if email_source:
+        contact_bits.append(
+            f'found on <a href="{esc(email_source)}" target="_blank" rel="noopener">{esc(email_source)}</a>'
+        )
+    if research.get("contact_name"):
+        role = f", {esc(research.get('contact_role'))}" if research.get("contact_role") else ""
+        contact_bits.append(f"named contact: {esc(research['contact_name'])}{role}")
+
+    gate = fit.get("gate_reasons") or []
+    gate_html = ""
+    if gate:
+        gate_html = (
+            '<h3 style="margin-top:20px">Why it did not qualify</h3><ul>'
+            + "".join(f"<li>{esc(x)}</li>" for x in gate)
+            + "</ul>"
+        )
+
+    claims_html = ""
+    if offer:
+        claims_html = (
+            f'<h3 style="margin-top:20px">What you may claim &mdash; {esc(offer.get("name"))}</h3>'
+            f'<p class="help">Verifiable on your own site. Anything beyond this is not supported by the catalog.</p>'
+            f"<ul>{bullets(offer.get('allowed_claims'), 'None')}</ul>"
+        )
+
+    return f"""
+    <p>{esc(research.get('company_summary'))}</p>
+
+    <h3 style="margin-top:20px">Score</h3>
+    <table class="table"><tbody>{rows}</tbody></table>
+
+    <h3 style="margin-top:20px">Why it fits</h3>
+    <p>{esc(fit.get('rationale'))}</p>
+    {f"<p><strong>Suggested angle:</strong> {esc(fit.get('recommended_angle'))}</p>" if fit.get("recommended_angle") else ""}
+
+    <h3 style="margin-top:20px">Problems observed on their site</h3>
+    <ul>{bullets(research.get('observed_problems'), 'None recorded')}</ul>
+
+    <h3 style="margin-top:20px">Evidence</h3>
+    <ul class="evidence">{ev_html}</ul>
+
+    <h3 style="margin-top:20px">Contact</h3>
+    <p>{" &middot; ".join(contact_bits)}</p>
+
+    <h3 style="margin-top:20px">Working against them</h3>
+    <ul>{bullets(research.get('negative_signals'), 'Nothing recorded')}</ul>
+    {f"<h3 style='margin-top:20px'>Contradictions</h3><ul>{bullets(fit.get('contradictions'), 'None')}</ul>" if fit.get("contradictions") else ""}
+    {claims_html}
+    {gate_html}"""
+
+
 def prospect_detail_page(
     p: dict[str, Any],
     messages: list[dict[str, Any]],
     draft: dict[str, Any] | None = None,
+    offer: dict[str, Any] | None = None,
+    weights: dict[str, Any] | None = None,
     msg: str | None = None,
     err: str | None = None,
 ) -> str:
@@ -333,6 +440,9 @@ def prospect_detail_page(
         )
     if not msg_rows:
         msg_rows = '<tr><td colspan="4" class="muted">No emails yet.</td></tr>'
+
+    brief_html = _brief(p, research if isinstance(research, dict) else {},
+                       fit if isinstance(fit, dict) else {}, offer, weights)
 
     if draft:
         # Show the stored text and send exactly it, so approval means approving
@@ -383,6 +493,11 @@ def prospect_detail_page(
         </form>
         <p class="help">A compliance footer and one-click unsubscribe are added automatically.</p>
       </div>
+    </div>
+
+    <div class="card"><h2>Outreach brief</h2>
+      <p class="help">Everything the research found, in full. Written from stored data &mdash; reading this and writing your own email costs nothing.</p>
+      {brief_html}
     </div>
 
     <div class="card tableWrap"><h2>Email history</h2>

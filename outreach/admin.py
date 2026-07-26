@@ -27,6 +27,7 @@ from outreach.db import init_db
 from outreach.orchestrator import OutreachOrchestrator
 from outreach.repository import (
     dashboard_stats,
+    get_active_catalog,
     get_message,
     get_open_draft,
     get_prospect,
@@ -173,7 +174,25 @@ def prospect_detail(
     messages = list_messages(prospect_id=prospect_id)
     catalog_version = prospect.get("scored_catalog_version")
     draft = get_open_draft(prospect_id, catalog_version) if catalog_version else None
-    return _html(adminui.prospect_detail_page(prospect, messages, draft=draft, msg=msg, err=err))
+    # The brief is rendered from stored research, so reviewing a prospect and
+    # writing to them by hand costs nothing.
+    catalog = get_active_catalog()
+    offer = None
+    if catalog and prospect.get("selected_offer_key"):
+        offer = next(
+            (o for o in catalog.offers if o.offer_key == prospect["selected_offer_key"]), None
+        )
+    return _html(
+        adminui.prospect_detail_page(
+            prospect,
+            messages,
+            draft=draft,
+            offer=offer.model_dump(mode="json") if offer else None,
+            weights=get_criteria()["weights"],
+            msg=msg,
+            err=err,
+        )
+    )
 
 
 @router.post("/admin/prospects/{prospect_id}/draft")
