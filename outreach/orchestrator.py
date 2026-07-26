@@ -50,6 +50,19 @@ LOCK_IDS = {
 }
 
 
+def _record(mark: Any, prospect_id: str, reason: str) -> None:
+    """Record a per-prospect outcome without letting bookkeeping abort the batch.
+
+    These calls run inside an except block, so anything they raise escapes the
+    loop and kills the whole job - which is how one prospect's failure took down
+    an entire research run.
+    """
+    try:
+        mark(prospect_id, reason)
+    except Exception:  # noqa: BLE001 - the original failure is what matters
+        pass
+
+
 class OutreachOrchestrator:
     def __init__(self) -> None:
         self.settings = get_settings()
@@ -177,10 +190,10 @@ class OutreachOrchestrator:
                         rejected += 1
                 except NoPublicContact as exc:
                     # Permanent, and caught before either LLM call ran.
-                    mark_rejected(prospect_id, str(exc))
+                    _record(mark_rejected, prospect_id, str(exc))
                     no_contact += 1
                 except Exception as exc:
-                    mark_research_failed(prospect_id, str(exc))
+                    _record(mark_research_failed, prospect_id, str(exc))
                     failed += 1
             return {
                 "ok": True,

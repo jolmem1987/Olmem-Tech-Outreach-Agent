@@ -168,8 +168,8 @@ def delete_prospects(prospect_ids: list[str]) -> int:
         return 0
     with connection() as conn:
         cursor = conn.execute(
-            "DELETE FROM outreach_prospects WHERE id = ANY(%s) AND status = 'discovered'",
-            (prospect_ids,),
+            "DELETE FROM outreach_prospects WHERE id = ANY(%s::uuid[]) AND status = 'discovered'",
+            ([str(value) for value in prospect_ids],),
         )
         conn.commit()
         return cursor.rowcount
@@ -182,7 +182,10 @@ def mark_rejected(prospect_id: str, reason: str) -> None:
             """
             UPDATE outreach_prospects
             SET status = 'rejected',
-                fit_json = jsonb_build_object('rejected_reason', %s),
+                -- ::text is required: jsonb_build_object takes "any", so Postgres
+                -- cannot infer the parameter type and errors with "could not
+                -- determine data type of parameter $1".
+                fit_json = jsonb_build_object('rejected_reason', %s::text),
                 updated_at = NOW()
             WHERE id = %s
             """,
@@ -197,7 +200,7 @@ def mark_research_failed(prospect_id: str, reason: str) -> None:
             """
             UPDATE outreach_prospects
             SET status = 'research_failed',
-                fit_json = jsonb_build_object('error', %s),
+                fit_json = jsonb_build_object('error', %s::text),
                 updated_at = NOW()
             WHERE id = %s
             """,
