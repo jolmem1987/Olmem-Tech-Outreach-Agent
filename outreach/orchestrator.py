@@ -335,6 +335,51 @@ class OutreachOrchestrator:
         token = make_unsubscribe_token(email)
         return f"{self.settings.app_base_url}/api/unsubscribe/{token}"
 
+    def draft_prospect(self, prospect_id: str) -> dict[str, Any]:
+        """Compose an outreach draft for one prospect and store it unsent.
+
+        Approval needs something to approve. Drafts were previously only created
+        by the send job, so a prospect it had not reached had nothing to review
+        and "approve and send" would have composed and sent in a single click.
+        """
+        prospect = get_prospect(prospect_id)
+        if prospect is None:
+            return {"ok": False, "error": "Prospect not found."}
+        if not prospect.get("research_json") or not prospect.get("fit_json"):
+            return {"ok": False, "error": "This prospect has not been researched and scored yet."}
+        recipient = prospect.get("contact_email")
+        if not recipient:
+            return {"ok": False, "error": "This prospect has no verified contact email."}
+
+        catalog = get_active_catalog()
+        if catalog is None:
+            return {"ok": False, "error": "No active offer catalog."}
+        offer = {o.offer_key: o for o in catalog.offers}.get(prospect.get("selected_offer_key"))
+        if offer is None:
+            return {"ok": False, "error": "The prospect's selected offer is not in the active catalog."}
+
+        existing = get_open_draft(prospect_id, catalog.catalog_version)
+        if existing:
+            return {"ok": True, "message_id": str(existing["id"]), "reused": True}
+
+        research = ProspectResearch.model_validate(prospect["research_json"])
+        fit = FitAssessment.model_validate(prospect["fit_json"])
+        try:
+            draft = EmailComposer().compose(offer, research, fit)
+        except Exception as exc:
+            return {"ok": False, "error": f"Draft could not be composed: {exc}"}
+
+        message_id = create_message(
+            prospect_id,
+            catalog.catalog_version,
+            offer.offer_key,
+            recipient,
+            draft.subject,
+            draft.text_body,
+            draft.html_body,
+        )
+        return {"ok": True, "message_id": message_id, "subject": draft.subject}
+
     def send_prospect_now(self, prospect_id: str) -> dict[str, Any]:
         """Compose the AI outreach draft for one prospect and send it now,
         bypassing the autonomous-send gate and daily limit. Still respects the

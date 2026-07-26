@@ -28,6 +28,7 @@ from outreach.orchestrator import OutreachOrchestrator
 from outreach.repository import (
     dashboard_stats,
     get_message,
+    get_open_draft,
     get_prospect,
     list_messages,
     list_prospects,
@@ -170,7 +171,23 @@ def prospect_detail(
     if not prospect:
         return _redirect("/admin/prospects", err="Prospect not found.")
     messages = list_messages(prospect_id=prospect_id)
-    return _html(adminui.prospect_detail_page(prospect, messages, msg=msg, err=err))
+    catalog_version = prospect.get("scored_catalog_version")
+    draft = get_open_draft(prospect_id, catalog_version) if catalog_version else None
+    return _html(adminui.prospect_detail_page(prospect, messages, draft=draft, msg=msg, err=err))
+
+
+@router.post("/admin/prospects/{prospect_id}/draft")
+def make_draft(request: Request, prospect_id: str) -> RedirectResponse:
+    if not is_authenticated(request):
+        return _login_redirect()
+    if not _valid_uuid(prospect_id):
+        return _redirect("/admin/prospects", err="Invalid prospect id.")
+    _ensure_schema()
+    result = OutreachOrchestrator().draft_prospect(prospect_id)
+    dest = f"/admin/prospects/{prospect_id}"
+    if result.get("ok"):
+        return _redirect(dest, msg="Draft ready to review." if not result.get("reused") else "Draft already exists.")
+    return _redirect(dest, err=result.get("error", "Could not compose a draft."))
 
 
 @router.post("/admin/prospects/{prospect_id}/send-draft")
