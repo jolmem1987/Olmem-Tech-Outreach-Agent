@@ -292,6 +292,24 @@ def get_eligible_for_send(limit: int, cooldown_days: int) -> list[dict[str, Any]
     return list(rows)
 
 
+def get_open_draft(prospect_id: str, catalog_version: str) -> dict[str, Any] | None:
+    """The newest unsent draft for this prospect at the active catalog version."""
+    with connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, offer_key, recipient_email, subject, text_body, html_body
+            FROM outreach_messages
+            WHERE prospect_id = %s
+              AND catalog_version = %s
+              AND status = 'drafted'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (prospect_id, catalog_version),
+        ).fetchone()
+    return dict(row) if row else None
+
+
 def create_message(
     prospect_id: str,
     catalog_version: str,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+from types import SimpleNamespace
 from typing import Any
 
 from outreach.catalog import CatalogBuilder, load_local_catalog
@@ -17,6 +18,7 @@ from outreach.repository import (
     get_active_catalog,
     get_eligible_for_send,
     get_prospect,
+    get_open_draft,
     get_prospects_for_research,
     is_suppressed,
     list_unresearched_prospects,
@@ -249,6 +251,20 @@ class OutreachOrchestrator:
                     unsubscribe_url = f"{self.settings.app_base_url}/api/unsubscribe/{token}"
 
                     if not autonomous_send:
+                        # Store the draft so it is reviewable in the panel. It used
+                        # to be pushed to the admin webhook and dropped, which left
+                        # preview mode producing nothing you could actually read.
+                        if get_open_draft(str(row["id"]), catalog.catalog_version):
+                            continue  # already drafted for this catalog version
+                        create_message(
+                            str(row["id"]),
+                            catalog.catalog_version,
+                            offer.offer_key,
+                            row["contact_email"],
+                            draft.subject,
+                            draft.text_body,
+                            draft.html_body,
+                        )
                         sync_to_admin(
                             "outreach_preview",
                             {
@@ -342,22 +358,33 @@ class OutreachOrchestrator:
         if offer is None:
             return {"ok": False, "error": "The prospect's selected offer is not in the active catalog. Re-run research to rescore."}
 
-        research = ProspectResearch.model_validate(prospect["research_json"])
-        fit = FitAssessment.model_validate(prospect["fit_json"])
-        try:
-            draft = EmailComposer().compose(offer, research, fit)
-        except Exception as exc:
-            return {"ok": False, "error": f"Draft could not be composed: {exc}"}
-
-        message_id = create_message(
-            prospect_id,
-            catalog.catalog_version,
-            offer.offer_key,
-            recipient,
-            draft.subject,
-            draft.text_body,
-            draft.html_body,
-        )
+        # Send exactly what was reviewed. Composing again here would email a
+        # different message from the one shown on the page, since each compose is
+        # a fresh model call.
+        existing = get_open_draft(prospect_id, catalog.catalog_version)
+        if existing:
+            message_id = str(existing["id"])
+            draft = SimpleNamespace(
+                subject=existing["subject"],
+                text_body=existing["text_body"],
+                html_body=existing["html_body"],
+            )
+        else:
+            research = ProspectResearch.model_validate(prospect["research_json"])
+            fit = FitAssessment.model_validate(prospect["fit_json"])
+            try:
+                draft = EmailComposer().compose(offer, research, fit)
+            except Exception as exc:
+                return {"ok": False, "error": f"Draft could not be composed: {exc}"}
+            message_id = create_message(
+                prospect_id,
+                catalog.catalog_version,
+                offer.offer_key,
+                recipient,
+                draft.subject,
+                draft.text_body,
+                draft.html_body,
+            )
         try:
             provider_id = SendGridSender().send(
                 message_id=message_id,
