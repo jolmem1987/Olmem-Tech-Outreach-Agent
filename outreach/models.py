@@ -30,6 +30,14 @@ class Offer(BaseModel):
     landing_url: str
     evidence_urls: list[str]
     search_queries: list[str] = []
+    # Local trades are found by appending a region to every query. An online
+    # seller is not tied to one, and adding a region surfaces the local retail
+    # counter instead of the ecommerce operation. Set false to search as written.
+    region_scoped: bool = True
+    # Share of each discovery run's query budget, relative to the other offers.
+    # Region-scoped offers generate hundreds of queries and would otherwise
+    # crowd out a national offer that needs only a dozen.
+    discovery_weight: int = Field(default=1, ge=1, le=10)
 
 
 class OfferCatalog(BaseModel):

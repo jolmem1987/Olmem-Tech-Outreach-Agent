@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from itertools import zip_longest
 from urllib.parse import urlparse
 
@@ -18,21 +19,50 @@ class ProspectDiscovery:
         self.regions = [item.strip() for item in regions_raw.split(",") if item.strip()]
 
     def _queries(self, catalog: OfferCatalog) -> list[str]:
-        """Build the search queries, interleaved so truncation stays fair.
+        """Build this run's search queries.
 
-        The list is capped, and building it offer-by-offer meant the cap fell
-        entirely on the last offers - with six offers and four regions, the tail
-        of the catalog was never searched at all. Round-robin instead, so every
-        offer keeps its best queries and the cap trims each of them evenly.
+        Three things shape the list:
+
+        Offers that sell to a local trade are searched once per region, because
+        a roofer is found by where they work. Offers marked region_scoped=false
+        are searched as written - an online parts seller has no service area,
+        and appending a city returns the local retail counter instead.
+
+        Queries are interleaved round-robin across offers, so the cap trims
+        every offer evenly instead of dropping the tail of the catalog.
+
+        The list is then rotated by day, so consecutive runs explore different
+        parts of the space. Without this the cap would pin every run to the same
+        first N queries and discovery would keep rediscovering the same domains.
         """
-        per_offer: list[list[str]] = []
+        per_offer: list[tuple[int, list[str]]] = []
         for offer in catalog.offers:
             bases = offer.search_queries or offer.ideal_customer_signals[:3]
-            per_offer.append(
-                [f"{base} {region} business" for base in bases for region in self.regions]
-            )
-        queries = [query for row in zip_longest(*per_offer) for query in row if query]
-        return list(dict.fromkeys(queries))[: max(10, self.settings.max_discoveries_per_run * 2)]
+            if offer.region_scoped and self.regions:
+                queries = [f"{base} {region} business" for base in bases for region in self.regions]
+            else:
+                queries = list(bases)
+            if queries:
+                per_offer.append((offer.discovery_weight, queries))
+        if not per_offer:
+            return []
+
+        cap = max(10, self.settings.max_discoveries_per_run * 2)
+        total_weight = sum(weight for weight, _ in per_offer)
+        day = date.today().toordinal()
+
+        selected: list[list[str]] = []
+        leftovers: list[str] = []
+        for weight, queries in per_offer:
+            share = max(1, round(cap * weight / total_weight))
+            start = (day * share) % len(queries)
+            rotated = queries[start:] + queries[:start]
+            selected.append(rotated[:share])
+            leftovers.extend(rotated[share:])
+
+        chosen = [query for row in zip_longest(*selected) for query in row if query]
+        chosen.extend(leftovers)  # top up to the cap if an offer had fewer than its share
+        return list(dict.fromkeys(chosen))[:cap]
 
     def _from_feed(self) -> list[Candidate]:
         if not self.settings.prospect_feed_url:

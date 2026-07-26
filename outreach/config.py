@@ -23,7 +23,22 @@ class Settings(BaseSettings):
     tavily_api_key: str | None = None
     prospect_feed_url: str | None = None
     prospect_feed_token: str | None = None
-    discovery_regions: str = "Kenosha WI,Racine WI,Milwaukee WI,Northeast Illinois"
+    # Appended to the queries of offers that sell to a local trade, so this list
+    # is what makes contractor discovery nationwide rather than local. Offers
+    # marked region_scoped=false ignore it entirely.
+    #
+    # States rather than metros: a metro list finds the biggest, best-marketed
+    # operators in each city - exactly the ones who already have a good website.
+    # Searching by state reaches the smaller regional firms who do not.
+    discovery_regions: str = (
+        "Alabama,Alaska,Arizona,Arkansas,California,Colorado,Connecticut,Delaware,"
+        "Florida,Georgia,Hawaii,Idaho,Illinois,Indiana,Iowa,Kansas,Kentucky,Louisiana,"
+        "Maine,Maryland,Massachusetts,Michigan,Minnesota,Mississippi,Missouri,Montana,"
+        "Nebraska,Nevada,New Hampshire,New Jersey,New Mexico,New York,North Carolina,"
+        "North Dakota,Ohio,Oklahoma,Oregon,Pennsylvania,Rhode Island,South Carolina,"
+        "South Dakota,Tennessee,Texas,Utah,Vermont,Virginia,Washington,West Virginia,"
+        "Wisconsin,Wyoming"
+    )
     max_discoveries_per_run: int = Field(default=20, ge=1, le=100)
     max_research_per_run: int = Field(default=8, ge=1, le=50)
 

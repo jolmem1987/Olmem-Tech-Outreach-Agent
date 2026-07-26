@@ -8,16 +8,78 @@ import socket
 from urllib.parse import urljoin, urlparse, urlunparse
 
 
+# Domains that can never be a prospect. Local search returns a lot of these:
+# a chain's store-locator page for a given town looks exactly like a local
+# business result, but there is nobody there to sell a website to. Subdomains
+# are covered, so "stores.advanceautoparts.com" is caught by the parent entry.
 BLOCKED_HOST_SUFFIXES = (
+    # Social and general platforms
     "facebook.com",
     "instagram.com",
     "linkedin.com",
     "x.com",
     "twitter.com",
     "youtube.com",
+    "tiktok.com",
+    "pinterest.com",
+    "nextdoor.com",
+    # Business directories and lead-gen marketplaces
     "yelp.com",
     "yellowpages.com",
     "mapquest.com",
+    "bbb.org",
+    "angi.com",
+    "angieslist.com",
+    "homeadvisor.com",
+    "thumbtack.com",
+    "houzz.com",
+    "porch.com",
+    "buildzoom.com",
+    "manta.com",
+    "chamberofcommerce.com",
+    "alignable.com",
+    "indeed.com",
+    "glassdoor.com",
+    "tripadvisor.com",
+    "zoominfo.com",
+    "dnb.com",
+    "crunchbase.com",
+    # National auto parts chains and their store locators
+    "autozone.com",
+    "oreillyauto.com",
+    "advanceautoparts.com",
+    "napaonline.com",
+    "genuineparts.com",
+    "carquest.com",
+    "pepboys.com",
+    "partsauthority.com",
+    # Parts marketplaces and aggregators
+    "rockauto.com",
+    "carparts.com",
+    "partsgeek.com",
+    "1aauto.com",
+    "carid.com",
+    "summitracing.com",
+    "jegs.com",
+    "ebay.com",
+    "amazon.com",
+    "walmart.com",
+    # Vehicle listings and data providers
+    "carfax.com",
+    "cars.com",
+    "autotrader.com",
+    "cargurus.com",
+    "carvana.com",
+    "edmunds.com",
+    "kbb.com",
+    "truecar.com",
+    # Manufacturer and big-box sites that rank for contractor searches
+    "gaf.com",
+    "owenscorning.com",
+    "certainteed.com",
+    "homedepot.com",
+    "lowes.com",
+    "menards.com",
 )
 
 

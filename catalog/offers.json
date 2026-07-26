@@ -13,11 +13,19 @@
     "Every entry in allowed_claims must be verifiable on a page in evidence_urls. The",
     "drafting step may not exceed them.",
     "",
-    "search_queries are the discovery seeds, combined as '{query} {region} business' for",
-    "each region in DISCOVERY_REGIONS. The combined list is interleaved across offers and",
-    "then truncated to max(10, MAX_DISCOVERIES_PER_RUN * 2). At 6 offers x 3 queries x 4",
-    "regions = 72 against a cap of 40, roughly half are dropped - but interleaving means",
-    "every offer still gets searched. Raise MAX_DISCOVERIES_PER_RUN to 36 for everything."
+    "Discovery controls, per offer:",
+    "  search_queries   - the seeds sent to Tavily.",
+    "  region_scoped    - true appends each region in DISCOVERY_REGIONS (the 50 states),",
+    "                     which is how local trades are found. False searches the query as",
+    "                     written; an online seller has no service area, and adding a state",
+    "                     returns the local retail counter instead of the ecommerce store.",
+    "  discovery_weight - share of each run's query budget. Region-scoped offers generate",
+    "                     hundreds of queries and would otherwise crowd out a national",
+    "                     offer that needs only a dozen. Parts ecommerce is weighted",
+    "                     highest because it is the primary target.",
+    "",
+    "Each run takes max(10, MAX_DISCOVERIES_PER_RUN * 2) queries, split by weight and",
+    "rotated by date, so consecutive runs explore different parts of the space."
   ],
   "offers": [
     {
@@ -62,8 +70,14 @@
       "search_queries": [
         "roofing contractor",
         "hvac contractor",
-        "plumbing contractor"
-      ]
+        "plumbing contractor",
+        "electrical contractor",
+        "concrete contractor",
+        "remodeling contractor",
+        "landscaping company",
+        "siding and gutter contractor"
+      ],
+      "discovery_weight": 2
     },
     {
       "offer_key": "automotive-marketplace-website",
@@ -104,11 +118,22 @@
         "https://www.olmemtech.com/website-business",
         "https://www.olmemtech.com/pricing"
       ],
+      "region_scoped": false,
       "search_queries": [
-        "auto parts store",
-        "truck accessories retailer",
-        "performance parts shop"
-      ]
+        "online auto parts store",
+        "aftermarket auto parts ecommerce store",
+        "performance parts online retailer",
+        "truck accessories online store",
+        "jeep parts online store",
+        "diesel performance parts online store",
+        "classic car parts online store",
+        "motorcycle parts online store",
+        "powersports parts online store",
+        "heavy duty truck parts online store",
+        "OEM replacement parts online store",
+        "auto parts catalog website with fitment search"
+      ],
+      "discovery_weight": 4
     },
     {
       "offer_key": "enterprise-website",
@@ -151,10 +176,12 @@
         "https://www.olmemtech.com/pricing"
       ],
       "search_queries": [
-        "multi location dealership",
         "wholesale distributor",
-        "manufacturing company"
-      ]
+        "manufacturing company",
+        "industrial supplier",
+        "multi location service company"
+      ],
+      "discovery_weight": 1
     },
     {
       "offer_key": "smart-chatbot",
@@ -195,7 +222,8 @@
         "auto repair shop",
         "dental practice",
         "insurance agency"
-      ]
+      ],
+      "discovery_weight": 1
     },
     {
       "offer_key": "workflow-automation",
@@ -234,7 +262,8 @@
         "property management company",
         "equipment rental company",
         "commercial cleaning company"
-      ]
+      ],
+      "discovery_weight": 1
     },
     {
       "offer_key": "cms-integrations",
@@ -269,11 +298,20 @@
         "https://www.olmemtech.com/cms",
         "https://www.olmemtech.com/pricing"
       ],
+      "region_scoped": false,
       "search_queries": [
-        "building supply company",
-        "industrial equipment dealer",
-        "hvac supply distributor"
-      ]
+        "parts distributor online catalog",
+        "industrial parts supplier ecommerce",
+        "equipment parts online catalog",
+        "wholesale distributor online catalog",
+        "hvac parts online store",
+        "plumbing supply online store",
+        "electrical supply online store",
+        "agricultural parts online store",
+        "marine parts online store",
+        "replacement parts catalog website"
+      ],
+      "discovery_weight": 3
     }
   ]
 }
