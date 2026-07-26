@@ -1,0 +1,183 @@
+{
+  "_comment": [
+    "Hand-maintained offer catalog, imported by the 'Import catalog from file' button",
+    "in /admin. Built from the olmem-tech repo: lib/site-content.ts (pricingPlans,",
+    "chatbotOption, workflowCmsOptions, subscriptionPlans) and the PACKAGES map in",
+    "app/api/stripe/checkout/route.ts, which hold the authoritative names and amounts.",
+    "",
+    "Importing this costs nothing - no crawl, no LLM call. Edit it here when the site's",
+    "offers change, then click Import again. Every claim in allowed_claims must be",
+    "verifiable on the page listed in evidence_urls; the drafting step may not exceed them.",
+    "",
+    "search_queries are the discovery seeds. Each is combined as",
+    "'{query} {region} business' for every region in DISCOVERY_REGIONS, deduped, then",
+    "truncated to max(10, MAX_DISCOVERIES_PER_RUN * 2). At 4 offers x 3 queries x 4",
+    "regions = 48 candidates against a cap of 40, so the last offer is partly cut off.",
+    "Raise MAX_DISCOVERIES_PER_RUN to 25 for full coverage."
+  ],
+  "offers": [
+    {
+      "offer_key": "contractor-website",
+      "name": "Contractor Website Build",
+      "summary": "Flat-rate contractor website builds from $1,500 to $5,000. Mobile-first and conversion-focused, with a CMS and admin dashboard, an AI chatbot, and the first year of hosting included.",
+      "problems_solved": [
+        "The business has no website, only a social media page or a directory listing",
+        "The existing site is not mobile friendly",
+        "There is no quote request form, so enquiries only arrive by phone",
+        "Service and location pages are missing, so the site does not surface in local search",
+        "The owner cannot edit their own content without calling a developer"
+      ],
+      "ideal_customer_signals": [
+        "Licensed trade contractor serving a defined local service area",
+        "Website with no quote form or contact form",
+        "Site content or copyright date that has not been updated in several years",
+        "A Facebook page listed as the business website",
+        "Single-page site with no individual service pages"
+      ],
+      "exclusion_signals": [
+        "Site is already modern, mobile friendly, and has a clear quote funnel",
+        "National franchise whose website is managed corporately",
+        "The business is itself a web design or marketing agency",
+        "Site displays a recent redesign or launch announcement"
+      ],
+      "allowed_claims": [
+        "The Starter Contractor Website is $1,500 flat rate and covers up to 5 pages",
+        "The Growth Contractor Website is $3,500 flat rate and typically covers 8-12 pages",
+        "The Premium Contractor Website is $5,000 flat rate and covers up to 20 conversion-focused pages",
+        "Hosting is free for the first year, then $35 per month",
+        "A content management system and admin dashboard are included",
+        "An AI chatbot is included with every website package",
+        "Optional maintenance is $100 per month"
+      ],
+      "call_to_action": "Offer to send a short outline of what a lead-ready site would cover for their specific trade and service area.",
+      "landing_url": "https://www.olmemtech.com/pricing",
+      "evidence_urls": [
+        "https://www.olmemtech.com/pricing",
+        "https://www.olmemtech.com/websites"
+      ],
+      "search_queries": [
+        "roofing contractor",
+        "hvac contractor",
+        "plumbing contractor"
+      ]
+    },
+    {
+      "offer_key": "smart-chatbot",
+      "name": "Smart Chat Bot",
+      "summary": "A $500 one-time AI chatbot trained on the business's own services and FAQs, which answers common questions and captures leads around the clock on a website they already have.",
+      "problems_solved": [
+        "Visitors ask the same questions and nobody answers outside business hours",
+        "Enquiries arrive only through a contact form that goes unanswered until the next day",
+        "Visitors leave without being qualified or captured as a lead",
+        "Staff spend time answering identical questions by phone"
+      ],
+      "ideal_customer_signals": [
+        "An existing website with no live chat or automated lead capture",
+        "A published FAQ page indicating high repeat question volume",
+        "Appointment or estimate-driven service business",
+        "Contact page that lists only a phone number and business hours"
+      ],
+      "exclusion_signals": [
+        "A live chat or chatbot widget is already present on the site",
+        "The business sells chatbot or conversational AI services itself",
+        "No website exists to install it on"
+      ],
+      "allowed_claims": [
+        "The Smart Chat Bot is $500 one-time for a site the business already has",
+        "It provides 24/7 lead capture and FAQ responses",
+        "It is trained on the business's own services and FAQs",
+        "Website integration is included",
+        "It is included at no extra cost with every Olmem Tech website package"
+      ],
+      "call_to_action": "Offer to show the questions a chatbot would field on their site in its first week.",
+      "landing_url": "https://www.olmemtech.com/chatbot-starter",
+      "evidence_urls": [
+        "https://www.olmemtech.com/chatbot-starter",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "search_queries": [
+        "auto repair shop",
+        "dental practice",
+        "insurance agency"
+      ]
+    },
+    {
+      "offer_key": "workflow-automation",
+      "name": "Workflow Automation",
+      "summary": "Automation of lead routing, notifications, follow-up sequences, and tool integrations. A $99 planning deposit secures the setup and covers the initial planning session, with final scope quoted after review.",
+      "problems_solved": [
+        "Leads are routed and followed up by hand, so some are missed",
+        "The same information is retyped between a website, a spreadsheet, and a CRM",
+        "No automatic follow-up happens after an enquiry arrives",
+        "Notifications depend on someone remembering to check an inbox"
+      ],
+      "ideal_customer_signals": [
+        "Enquiry process described on the site as call or email only",
+        "Multiple disconnected tools referenced across the site",
+        "Quote or booking process that states a manual turnaround time",
+        "Business coordinating scheduling, dispatch, or supplier orders"
+      ],
+      "exclusion_signals": [
+        "The business already advertises automated workflows or an integrated platform",
+        "The business sells automation or systems integration services itself",
+        "Too small to have a repeatable process worth automating"
+      ],
+      "allowed_claims": [
+        "A $99 planning deposit secures the setup and covers the initial planning session",
+        "Final pricing is determined after reviewing the specific needs and systems",
+        "Most projects range from $500 to several thousand depending on complexity and integrations",
+        "Lead routing, notifications, follow-up sequences, and CRM or tool integrations are covered"
+      ],
+      "call_to_action": "Offer a short planning call to map their current process before quoting anything.",
+      "landing_url": "https://www.olmemtech.com/workflow-automation",
+      "evidence_urls": [
+        "https://www.olmemtech.com/workflow-automation",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "search_queries": [
+        "wholesale distributor",
+        "property management company",
+        "equipment rental company"
+      ]
+    },
+    {
+      "offer_key": "cms-integrations",
+      "name": "CMS and Integrations",
+      "summary": "A custom content management system with supplier and API integrations, including catalog, fitment, or product data sync. A $99 planning deposit covers the initial planning session, with final scope quoted after review.",
+      "problems_solved": [
+        "Staff cannot update site content without a developer",
+        "Product, catalog, or inventory data is maintained by hand in more than one place",
+        "Supplier data is not reflected on the website",
+        "Customers must call to check availability because the site cannot show it"
+      ],
+      "ideal_customer_signals": [
+        "Product or parts catalog on the site with no search or filtering",
+        "Pages that instruct customers to call for availability or pricing",
+        "Visible signs of a static site with stale inventory or listings",
+        "A distributor or dealer carrying supplier-sourced product data"
+      ],
+      "exclusion_signals": [
+        "The site already runs on a modern CMS the staff clearly maintain",
+        "The business sells CMS or integration services itself",
+        "No product or content catalog to manage"
+      ],
+      "allowed_claims": [
+        "A $99 planning deposit secures the setup and covers the initial planning session",
+        "Final pricing is determined after reviewing the specific needs and systems",
+        "Most projects range from $500 to several thousand depending on complexity and integrations",
+        "A custom content management system, supplier and API integrations, and fitment, catalog, or product data sync are covered"
+      ],
+      "call_to_action": "Offer to review how their catalog or content is maintained today and where a sync would remove duplicate work.",
+      "landing_url": "https://www.olmemtech.com/cms",
+      "evidence_urls": [
+        "https://www.olmemtech.com/cms",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "search_queries": [
+        "auto parts supplier",
+        "building supply company",
+        "industrial equipment dealer"
+      ]
+    }
+  ]
+}

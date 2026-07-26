@@ -220,7 +220,8 @@ def dashboard_page(stats: dict[str, Any], msg: str | None = None, err: str | Non
         f'<form class="inline" method="post" action="/admin/jobs/{j}">'
         f'<button class="button secondary small">{label}</button></form> '
         for j, label in [
-            ("catalog", "Rebuild catalog"),
+            ("catalog-import", "Import catalog from file"),
+            ("catalog", "Crawl site &amp; rebuild catalog"),
             ("discover", "Discover prospects"),
             ("research", "Research &amp; score"),
             ("send", "Run send job"),
@@ -242,6 +243,7 @@ def dashboard_page(stats: dict[str, Any], msg: str | None = None, err: str | Non
       <div class="card"><h2>Active offer catalog</h2>{catalog_html}
         <h3 style="margin-top:18px">Run a job now</h3>
         <p class="help">Manually trigger a pipeline step instead of waiting for the daily schedule. These can take a while (they call the LLM).</p>
+        <p class="help"><strong>Import catalog from file</strong> activates catalog/offers.json &mdash; free, instant, and exact. <strong>Crawl site &amp; rebuild catalog</strong> re-reads olmemtech.com and pays for an LLM extraction; it only runs when you click it.</p>
         <div class="actions">{jobs}</div>
       </div>
     </div>"""

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
@@ -10,6 +11,32 @@ from outreach.crawler import WebCrawler
 from outreach.llm import StructuredLLM
 from outreach.models import CatalogExtraction, Offer, OfferCatalog, SitePage
 from outreach.util import stable_json_hash
+
+
+LOCAL_CATALOG_PATH = Path(__file__).resolve().parent.parent / "catalog" / "offers.json"
+
+
+def load_local_catalog(path: Path | None = None) -> OfferCatalog:
+    """Build the catalog from the committed JSON file.
+
+    No crawl and no model call, so importing is free and deterministic. Use it
+    when the live site blocks automated clients, or simply to avoid paying to
+    re-extract offers that are already known and can be stated exactly.
+
+    The version hashes the offers themselves, so editing the file yields a new
+    catalog version and correctly forces affected prospects to be rescored.
+    """
+    source = path or LOCAL_CATALOG_PATH
+    if not source.exists():
+        raise ValueError(f"No local catalog file at {source}")
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    offers = [Offer.model_validate(item) for item in payload.get("offers", [])]
+    if not offers:
+        raise ValueError("The local catalog file contains no offers")
+    version = payload.get("catalog_version") or stable_json_hash(
+        [offer.model_dump(mode="json") for offer in offers]
+    )
+    return OfferCatalog(catalog_version=version, generated_from="manifest", offers=offers)
 
 
 CATALOG_INSTRUCTIONS = """

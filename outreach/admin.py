@@ -118,6 +118,7 @@ def run_job(request: Request, job: str) -> RedirectResponse:
     if not is_authenticated(request):
         return _login_redirect()
     method = {
+        "catalog-import": "import_catalog",
         "catalog": "refresh_catalog",
         "discover": "discover_prospects",
         "research": "research_and_score",

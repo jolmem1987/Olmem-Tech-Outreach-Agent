@@ -3,7 +3,7 @@ from __future__ import annotations
 import html
 from typing import Any
 
-from outreach.catalog import CatalogBuilder
+from outreach.catalog import CatalogBuilder, load_local_catalog
 from outreach.composer import EmailComposer
 from outreach.config import get_settings
 from outreach.criteria import get_criteria
@@ -47,29 +47,44 @@ class OutreachOrchestrator:
         self.settings = get_settings()
         init_db()
 
+    def import_catalog(self) -> dict[str, Any]:
+        """Activate the catalog committed at catalog/offers.json.
+
+        The crawl-and-extract path costs an LLM call over the whole site and
+        needs the site to allow automated clients. This one is free, offline,
+        and exact, so it is the normal way to publish a catalog change.
+        """
+        with job_lock(LOCK_IDS["catalog"]) as locked:
+            if not locked:
+                return {"ok": True, "skipped": "catalog job already running"}
+            return self._activate(load_local_catalog(), event="catalog_imported")
+
     def refresh_catalog(self) -> dict[str, Any]:
         with job_lock(LOCK_IDS["catalog"]) as locked:
             if not locked:
                 return {"ok": True, "skipped": "catalog job already running"}
-            catalog = CatalogBuilder().build()
-            save_catalog(catalog)
-            sync_to_admin(
-                "catalog_refreshed",
-                {
-                    "catalog_version": catalog.catalog_version,
-                    "generated_from": catalog.generated_from,
-                    "offers": [
-                        {"offer_key": offer.offer_key, "name": offer.name, "landing_url": offer.landing_url}
-                        for offer in catalog.offers
-                    ],
-                },
-            )
-            return {
-                "ok": True,
+            return self._activate(CatalogBuilder().build(), event="catalog_refreshed")
+
+    def _activate(self, catalog: OfferCatalog, *, event: str) -> dict[str, Any]:
+        """Make a freshly built or imported catalog the active one."""
+        save_catalog(catalog)
+        sync_to_admin(
+            event,
+            {
                 "catalog_version": catalog.catalog_version,
                 "generated_from": catalog.generated_from,
-                "offer_count": len(catalog.offers),
-            }
+                "offers": [
+                    {"offer_key": offer.offer_key, "name": offer.name, "landing_url": offer.landing_url}
+                    for offer in catalog.offers
+                ],
+            },
+        )
+        return {
+            "ok": True,
+            "catalog_version": catalog.catalog_version,
+            "generated_from": catalog.generated_from,
+            "offer_count": len(catalog.offers),
+        }
 
     def discover_prospects(self) -> dict[str, Any]:
         with job_lock(LOCK_IDS["discover"]) as locked:
