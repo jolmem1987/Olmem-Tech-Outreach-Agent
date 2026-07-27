@@ -222,7 +222,7 @@
     {
       "offer_key": "smart-chatbot",
       "name": "Smart Chat Bot",
-      "summary": "A $500 one-time AI assistant that works as a lead generator on the site a business already has. It qualifies visitors, collects their details, and sends every captured lead straight to their email or CRM, so enquiries outside business hours are not lost.",
+      "summary": "A $500 one-time AI sales agent for the site a business already has. It answers questions, qualifies visitors before they leave, and captures every lead through a contact form that actually works - emailed to the owner and written to their dashboard at the same time, so a submission cannot silently disappear.",
       "problems_solved": [
         "The contact or quote form is broken and submissions fail silently, so enquiries are lost without anyone knowing",
         "Enquiries arrive outside business hours and nobody answers until the next day",
@@ -247,15 +247,16 @@
       ],
       "allowed_claims": [
         "The Smart Chat Bot is $500 one-time to add to a website the business already has",
-        "It captures leads and answers FAQs 24/7, including when the business is closed",
-        "It asks qualifying questions before collecting contact details, so leads arrive pre-qualified rather than as raw form submissions",
-        "A notification is sent every time a lead is captured",
-        "Captured leads can flow into an existing CRM, email platform, or notification system",
+        "It includes a fully functioning contact form, so submissions do not fail silently",
+        "Every captured lead is emailed to the business and recorded in their dashboard at the same time, giving two independent paths in",
+        "It answers common questions and captures leads 24/7, including when the business is closed",
+        "It qualifies visitors with lead qualification conversation flows before they bounce",
         "It is trained on the business's own services and FAQs",
+        "Captured leads can also flow into an existing CRM or email platform",
         "Website integration and setup are included",
         "An AI chatbot is included at no extra cost with every Olmem Tech website package"
       ],
-      "call_to_action": "Offer to show what the assistant would ask their visitors, and what a captured lead would look like when it lands in their inbox.",
+      "call_to_action": "Offer to show what a working capture path would have caught on their site this month, and what a captured lead looks like when it lands in their inbox.",
       "landing_url": "https://www.olmemtech.com/chatbot-business",
       "evidence_urls": [
         "https://www.olmemtech.com/chatbot-business",
