@@ -472,6 +472,7 @@ def prospect_detail_page(
     <p><a href="/admin/prospects">← Back to prospects</a></p>
     <h1>{esc(p.get('company_name') or p.get('domain'))}</h1>
     <p class="muted">{esc(p.get('website'))} · {badge(p.get('status'))} · fit {esc(p.get('fit_score') if p.get('fit_score') is not None else '—')}</p>
+    {'<div class="flash err">Scored against an older catalog, so the selected offer is out of date. Run "Research &amp; score" to re-select it before drafting.</div>' if p.get('status') == 'needs_rescore' else ''}
 
     <div class="grid2">
       <div class="card kv"><h2>Prospect</h2>

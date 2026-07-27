@@ -358,6 +358,14 @@ class OutreachOrchestrator:
         offer = {o.offer_key: o for o in catalog.offers}.get(prospect.get("selected_offer_key"))
         if offer is None:
             return {"ok": False, "error": "The prospect's selected offer is not in the active catalog."}
+        # A fit from an older catalog names an offer chosen under the old rubric
+        # and the old wording. Drafting from it would pitch the superseded offer.
+        if prospect.get("scored_catalog_version") != catalog.catalog_version:
+            return {
+                "ok": False,
+                "error": "This prospect was scored against an older catalog. Run 'Research & score' to re-select the offer first.",
+            }
+
 
         if regenerate:
             delete_open_draft(prospect_id, catalog.catalog_version)
@@ -405,6 +413,14 @@ class OutreachOrchestrator:
         offer = offers.get(prospect.get("selected_offer_key"))
         if offer is None:
             return {"ok": False, "error": "The prospect's selected offer is not in the active catalog. Re-run research to rescore."}
+        # A fit from an older catalog names an offer chosen under the old rubric
+        # and the old wording. Drafting from it would pitch the superseded offer.
+        if prospect.get("scored_catalog_version") != catalog.catalog_version:
+            return {
+                "ok": False,
+                "error": "This prospect was scored against an older catalog. Run 'Research & score' to re-select the offer first.",
+            }
+
 
         # Send exactly what was reviewed. Composing again here would email a
         # different message from the one shown on the page, since each compose is
