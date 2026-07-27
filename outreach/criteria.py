@@ -182,6 +182,13 @@ Use this exact {total}-point rubric:
 - timing_signal, 0-{w['timing_signal']}: current evidence such as growth, hiring, launch, expansion, or a
   recently described problem. Do not invent timing.
 
+Select the narrowest offer that fully addresses the observed problem, not the largest one it
+can be argued into. A broken, missing, or unmonitored lead-capture mechanism on a site that
+is otherwise current is evidence that lead capture is failing; it is not evidence that the
+site needs rebuilding. Reserve a full website offer for sites whose structure or absence is
+itself the problem, and score offer_alignment lower when a smaller offer would resolve what
+the evidence actually shows.
+
 A business should normally remain below {gate} unless there is concrete problem evidence,
 a direct offer match, at least two independent evidence facts, and a valid public business
 email. Industry alone is insufficient. Return contradictions for any no-solicitation text,

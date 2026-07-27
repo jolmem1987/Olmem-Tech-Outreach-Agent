@@ -59,6 +59,7 @@
       ],
       "exclusion_signals": [
         "Site is already modern, mobile friendly, and has a clear quote funnel",
+        "The site is current and only its lead capture is failing - a smaller offer fits the evidence better than a rebuild",
         "National franchise whose website is managed corporately",
         "The business is itself a web design or marketing agency",
         "Site displays a recent redesign or launch announcement"
@@ -223,6 +224,7 @@
       "name": "Smart Chat Bot",
       "summary": "A $500 one-time AI assistant that works as a lead generator on the site a business already has. It qualifies visitors, collects their details, and sends every captured lead straight to their email or CRM, so enquiries outside business hours are not lost.",
       "problems_solved": [
+        "The contact or quote form is broken and submissions fail silently, so enquiries are lost without anyone knowing",
         "Enquiries arrive outside business hours and nobody answers until the next day",
         "Visitors leave without ever identifying themselves, so there is no lead to follow up",
         "The contact form produces raw submissions with no qualifying detail behind them",
@@ -230,6 +232,7 @@
         "Staff spend the day answering the same basic questions by phone and email"
       ],
       "ideal_customer_signals": [
+        "A contact or quote form that returns an error, or gives no confirmation that it worked",
         "An existing website whose only contact route is a form or a phone number",
         "No live chat or automated lead capture anywhere on the site",
         "Wording that promises to get back to visitors, implying a manual queue",
