@@ -460,7 +460,7 @@ class OutreachOrchestrator:
             return {"ok": True, "message_id": message_id, "recipient": recipient, "subject": draft.subject}
         except Exception as exc:
             mark_message_failed(message_id, str(exc))
-            return {"ok": False, "error": f"SendGrid rejected the message: {exc}"}
+            return {"ok": False, "error": str(exc)}
 
     def send_custom(self, prospect_id: str, subject: str, body: str, recipient: str | None = None) -> dict[str, Any]:
         """Send an admin-written custom email to a prospect."""
@@ -495,4 +495,4 @@ class OutreachOrchestrator:
             return {"ok": True, "message_id": message_id, "recipient": recipient, "subject": subject}
         except Exception as exc:
             mark_message_error(message_id, str(exc))
-            return {"ok": False, "error": f"SendGrid rejected the message: {exc}"}
+            return {"ok": False, "error": str(exc)}
