@@ -1,10 +1,8 @@
 {
   "_comment": [
-    "Hand-maintained offer catalog, activated by the 'Import catalog from file' button",
-    "in /admin. Built from the olmem-tech repo's authoritative definitions:",
-    "lib/site-content.ts (pricingPlans, chatbotOption, workflowCmsOptions) and the",
-    "PACKAGES map in app/api/stripe/checkout/route.ts, which hold the real names and",
-    "amounts charged by Stripe.",
+    "Hand-maintained offer catalog, activated by the 'Import catalog from file'",
+    "button in /admin. Built from the olmem-tech repo's authoritative definitions",
+    "and verified against the live pages listed in each offer's evidence_urls.",
     "",
     "Importing costs nothing - no crawl, no LLM call. When the site's offers change,",
     "edit this file and click Import again. The catalog version hashes these offers, so",
@@ -15,22 +13,20 @@
     "",
     "Discovery controls, per offer:",
     "  search_queries   - the seeds sent to Tavily.",
-    "  region_scoped    - true appends each region in DISCOVERY_REGIONS (the 50 states),",
-    "                     which is how local trades are found. False searches the query as",
-    "                     written; an online seller has no service area, and adding a state",
-    "                     returns the local retail counter instead of the ecommerce store.",
-    "  discovery_weight - share of each run's query budget. Region-scoped offers generate",
-    "                     hundreds of queries and would otherwise crowd out a national",
-    "                     highest because it is the primary target.",
+    "  region_scoped    - true appends each region in DISCOVERY_REGIONS, which is how",
+    "                     local trades and regional manufacturers are found. False",
+    "                     searches the query as written; an online seller has no service",
+    "                     area, and adding a state returns the local retail counter.",
+    "  discovery_weight - share of each run's query budget. Zero parks an offer: still",
+    "                     in the catalog and still pitchable, but no budget is spent",
+    "                     looking for it.",
     "",
     "Each run takes max(10, MAX_DISCOVERIES_PER_RUN * 2) queries, split by weight and",
     "rotated by date, so consecutive runs explore different parts of the space.",
     "",
-    "",
-    "Current focus: contractors with a thin or outdated site. Every other offer is",
-    "parked at discovery_weight 0 - still in the catalog and still pitchable, but no",
-    "discovery budget is spent looking for it, so contractor queries get the whole",
-    "run. Raise a weight when you are ready to work that market."
+    "Current focus: every offer is active. Contractor work keeps the largest share",
+    "because it is the highest-volume market; ERP and the enterprise tiers carry less",
+    "budget because they are lower-volume, higher-value, and need fewer prospects."
   ],
   "offers": [
     {
@@ -113,7 +109,286 @@
         "licensed and insured plumbing contractor",
         "local concrete contractor"
       ],
-      "discovery_weight": 8
+      "discovery_weight": 5
+    },
+    {
+      "offer_key": "contractor-website-500",
+      "name": "$500 Contractor Website Offer",
+      "summary": "A $500 limited-availability contractor website focused on one outcome: turning clicks into calls. Professional setup, mobile-friendly pages, a clear service and contact flow, with a CMS, admin dashboard, and AI chatbot included, on a fast launch timeline.",
+      "problems_solved": [
+        "The business has no website at all, only a social media page or a directory listing",
+        "The current site is not bringing in any calls or quote requests",
+        "The business looks less credible online than the competitors it bids against",
+        "Getting a site built has been put off because of cost and time",
+        "There is no way to capture a lead outside business hours"
+      ],
+      "ideal_customer_signals": [
+        "Licensed trade contractor with no owned website",
+        "A Facebook page listed as the business website",
+        "A parked, placeholder, or registrar domain page",
+        "Single-page site with no contact route beyond a phone number",
+        "Site hosted on a free website-builder subdomain rather than an owned domain",
+        "Small operation where the owner answers the phone directly"
+      ],
+      "exclusion_signals": [
+        "The contractor already has a working, mobile-friendly site with a quote funnel",
+        "The business needs individual service and location pages for local search - the Contractor Website package fits that scope better",
+        "National franchise whose website is managed corporately",
+        "The business is itself a web design or marketing agency"
+      ],
+      "allowed_claims": [
+        "The Contractor Website Offer is $500",
+        "Professional contractor website setup is included",
+        "Mobile-friendly pages that are easy to navigate are included",
+        "A clear service and contact flow built to drive calls is included",
+        "A content management system and admin dashboard are included",
+        "An AI chatbot is included to capture leads around the clock",
+        "A fast launch timeline is included so leads can start arriving quickly",
+        "Only a limited number of projects are taken on each month"
+      ],
+      "call_to_action": "Offer to walk them through what the $500 build would cover for their trade, and mention that monthly availability is limited.",
+      "landing_url": "https://www.olmemtech.com/offers/contractor-website-500",
+      "evidence_urls": [
+        "https://www.olmemtech.com/offers/contractor-website-500"
+      ],
+      "region_scoped": true,
+      "search_queries": [
+        "roofing contractor",
+        "hvac contractor",
+        "plumbing contractor",
+        "electrical contractor",
+        "handyman service",
+        "painting contractor",
+        "landscaping company",
+        "concrete contractor",
+        "fencing contractor",
+        "pressure washing company"
+      ],
+      "discovery_weight": 4
+    },
+    {
+      "offer_key": "smart-chatbot",
+      "name": "Smart Chat Bot",
+      "summary": "A $500 one-time AI sales agent for the site a business already has. It answers questions, qualifies visitors before they leave, and captures every lead through a contact form that actually works - emailed to the owner and written to their dashboard at the same time, so a submission cannot silently disappear.",
+      "problems_solved": [
+        "The contact or quote form is broken and submissions fail silently, so enquiries are lost without anyone knowing",
+        "Enquiries arrive outside business hours and nobody answers until the next day",
+        "Visitors leave without ever identifying themselves, so there is no lead to follow up",
+        "The contact form produces raw submissions with no qualifying detail behind them",
+        "A small team cannot always respond quickly, and slow replies lose the job",
+        "Staff spend the day answering the same basic questions by phone and email"
+      ],
+      "ideal_customer_signals": [
+        "A contact or quote form that returns an error, or gives no confirmation that it worked",
+        "An existing website whose only contact route is a form or a phone number",
+        "No live chat or automated lead capture anywhere on the site",
+        "Wording that promises to get back to visitors, implying a manual queue",
+        "Estimate, quote, or appointment driven service business",
+        "Published business hours, so traffic outside them goes unanswered",
+        "A published FAQ page, indicating high repeat question volume"
+      ],
+      "exclusion_signals": [
+        "A live chat or chatbot widget is already present on the site",
+        "The business sells chatbot or conversational AI services itself",
+        "No website exists to install it on"
+      ],
+      "allowed_claims": [
+        "The Smart Chat Bot is $500 one-time to add to a website the business already has",
+        "It includes a fully functioning contact form, so submissions do not fail silently",
+        "Every captured lead is emailed to the business and recorded in their dashboard at the same time, giving two independent paths in",
+        "It answers common questions and captures leads 24/7, including when the business is closed",
+        "It qualifies visitors with lead qualification conversation flows before they bounce",
+        "It is trained on the business's own services and FAQs",
+        "Captured leads can also flow into an existing CRM or email platform",
+        "Website integration and setup are included",
+        "An AI chatbot is included at no extra cost with every Olmem Tech website package"
+      ],
+      "call_to_action": "Offer to show what a working capture path would have caught on their site this month, and what a captured lead looks like when it lands in their inbox.",
+      "landing_url": "https://www.olmemtech.com/chatbot-business",
+      "evidence_urls": [
+        "https://www.olmemtech.com/chatbot-business",
+        "https://www.olmemtech.com/chatbot-starter"
+      ],
+      "search_queries": [
+        "auto repair shop",
+        "dental practice",
+        "insurance agency"
+      ],
+      "discovery_weight": 4
+    },
+    {
+      "offer_key": "cms-integrations",
+      "name": "CMS and Integrations",
+      "summary": "A custom content management system with supplier and API integrations, including fitment, catalog, or product data sync, for a site the business already has. A $99 planning deposit covers the initial planning session.",
+      "problems_solved": [
+        "Staff cannot update site content without a developer",
+        "Product, catalog, or inventory data is maintained by hand in more than one place",
+        "Supplier data is not reflected on the website",
+        "Customers must call to check availability because the site cannot show it"
+      ],
+      "ideal_customer_signals": [
+        "Product or parts catalog on the site with no search or filtering",
+        "Pages that instruct customers to call for availability or pricing",
+        "Visible signs of a static site with stale inventory or listings",
+        "A distributor or dealer carrying supplier-sourced product data"
+      ],
+      "exclusion_signals": [
+        "The site already runs on a modern CMS the staff clearly maintain",
+        "The business sells CMS or integration services itself",
+        "No product or content catalog to manage"
+      ],
+      "allowed_claims": [
+        "A $99 planning deposit secures the setup and covers the initial planning session",
+        "Final pricing is determined after reviewing the specific needs and systems",
+        "Most projects range from $500 to several thousand depending on complexity and integrations",
+        "A custom content management system, supplier and API integrations, and fitment, catalog, or product data sync are covered"
+      ],
+      "call_to_action": "Offer to review how their catalog or content is maintained today and where a sync would remove duplicate work.",
+      "landing_url": "https://www.olmemtech.com/cms",
+      "evidence_urls": [
+        "https://www.olmemtech.com/cms",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "region_scoped": false,
+      "search_queries": [
+        "parts distributor online catalog",
+        "industrial parts supplier ecommerce",
+        "equipment parts online catalog",
+        "wholesale distributor online catalog",
+        "hvac parts online store",
+        "plumbing supply online store",
+        "electrical supply online store",
+        "agricultural parts online store",
+        "marine parts online store",
+        "replacement parts catalog website"
+      ],
+      "discovery_weight": 3
+    },
+    {
+      "offer_key": "workflow-automation",
+      "name": "Workflow Automation",
+      "summary": "Automation of lead routing, notifications, follow-up sequences, and tool integrations. A $99 planning deposit secures the setup and covers the initial planning session, with final scope quoted after review.",
+      "problems_solved": [
+        "Leads are routed and followed up by hand, so some are missed",
+        "The same information is retyped between a website, a spreadsheet, and a CRM",
+        "No automatic follow-up happens after an enquiry arrives",
+        "Notifications depend on someone remembering to check an inbox"
+      ],
+      "ideal_customer_signals": [
+        "Enquiry process described on the site as call or email only",
+        "Multiple disconnected tools referenced across the site",
+        "Quote or booking process that states a manual turnaround time",
+        "Business coordinating scheduling, dispatch, or supplier orders"
+      ],
+      "exclusion_signals": [
+        "The business already advertises automated workflows or an integrated platform",
+        "The business sells automation or systems integration services itself",
+        "Too small to have a repeatable process worth automating"
+      ],
+      "allowed_claims": [
+        "A $99 planning deposit secures the setup and covers the initial planning session",
+        "Final pricing is determined after reviewing the specific needs and systems",
+        "Most projects range from $500 to several thousand depending on complexity and integrations",
+        "Lead routing, notifications, follow-up sequences, and CRM or tool integrations are covered"
+      ],
+      "call_to_action": "Offer a short planning call to map their current process before quoting anything.",
+      "landing_url": "https://www.olmemtech.com/workflow-automation",
+      "evidence_urls": [
+        "https://www.olmemtech.com/workflow-automation",
+        "https://www.olmemtech.com/pricing"
+      ],
+      "search_queries": [
+        "property management company",
+        "equipment rental company",
+        "commercial cleaning company"
+      ],
+      "discovery_weight": 3
+    },
+    {
+      "offer_key": "olmem-erp",
+      "name": "Olmem ERP (Manufacturing)",
+      "summary": "A maintenance-first manufacturing ERP for small and mid-sized manufacturers — the ones without an IT department. The software is a licensing product: bought once, owned permanently, with no subscription and no per-seat fees. Support and custom development exist only as optional add-on services for businesses that want them. It replaces two situations: a per-seat SaaS bill for a system the manufacturer will never own, or no system at all beyond spreadsheets and a few disconnected programs.",
+      "problems_solved": [
+        "A per-seat ERP or MRP subscription costs more every year and leaves the manufacturer owning nothing",
+        "Adding plant floor or office staff to the current system means paying for more seats",
+        "The subscription must be renewed indefinitely or the business loses access to its own operating system",
+        "Production and maintenance data sit on a vendor's servers rather than with the manufacturer",
+        "Modules the manufacturer does not use are bundled into the price anyway",
+        "Production, inventory, and maintenance are tracked in separate Excel files that do not reconcile",
+        "Several disconnected programs each hold part of the picture and none of them talk to each other",
+        "Preventive maintenance is missed because no system schedules or escalates it",
+        "There is no maintenance history, so the same machine failures keep recurring undiagnosed",
+        "Nobody can answer what a finished job actually cost, because the data was never captured",
+        "Stock levels are wrong because there is no ledger behind them, only a spreadsheet someone edits",
+        "There is no audit trail behind inventory movements or work order changes"
+      ],
+      "ideal_customer_signals": [
+        "Family-owned or owner-operated manufacturer, often describing a second or third generation",
+        "One facility, or a small number of plants all within one region",
+        "Owner, founder, or a named individual presented as the point of contact",
+        "A stated team size in the tens rather than the hundreds",
+        "Regional or national customer base rather than a global one",
+        "No IT department implied anywhere on the site",
+        "Careers or job listings requiring experience with a named ERP or MRP subscription platform",
+        "Job postings referencing 'our ERP system', MRP, or a named inventory or scheduling SaaS",
+        "A customer or vendor portal link pointing at a third-party SaaS domain rather than their own",
+        "Job listings requiring advanced Excel or spreadsheet proficiency for planning, scheduling, or inventory roles",
+        "Pages instructing customers to call or email to check stock, lead time, or order status",
+        "Order forms published as downloadable PDF or Excel files rather than an online system",
+        "A stated manual quote or order turnaround measured in days",
+        "No customer portal, order tracking, or online ordering anywhere on the site",
+        "Machine shop, fabricator, molder, processor, or assembler with maintained equipment",
+        "Careers pages hiring maintenance technicians, production planners, or schedulers",
+        "Quality or compliance certifications implying record-keeping and traceability obligations"
+      ],
+      "exclusion_signals": [
+        "Publicly traded, or an investor relations, shareholder, or SEC filings section on the site",
+        "A subsidiary, division, or portfolio company of a larger corporate group",
+        "Locations on more than one continent, or described as a global manufacturer",
+        "A stated headcount in the hundreds or thousands, or many plants across several regions",
+        "Job listings for in-house IT, ERP administrator, or systems analyst roles, implying an internal team that owns the stack",
+        "A dedicated procurement or vendor-onboarding process described on the site",
+        "The business already owns a perpetual-license system deployed on its own infrastructure, so the subscription pain does not apply",
+        "The business is itself a software vendor, ERP reseller, or systems integrator",
+        "No production, inventory, or maintenance operation to manage",
+        "The site indicates the business is closing, sold, or winding down"
+      ],
+      "allowed_claims": [
+        "Olmem ERP is a one-time purchase — you buy the license once and own the software permanently",
+        "No subscription is ever required to keep running",
+        "There are no per-seat fees and users are unlimited, so adding staff costs nothing extra",
+        "Unlimited company data is included",
+        "It is one system for maintenance, production, and the whole operation",
+        "It is a maintenance-first platform built for small and mid-sized manufacturers",
+        "It uses a desktop-first architecture with local deployment, data ownership, and role-based permissions",
+        "Founding-customer pricing starts at $9,500 one-time with installation included, against a regular price of $19,500",
+        "Professional installation and setup, database setup and configuration, and employee setup and initial training are all included in the one-time license price",
+        "Annual support is an optional add-on service, not a condition of ownership — the ERP keeps working whether it is never purchased at all or bought once and later allowed to lapse",
+        "If a business wants the optional support add-on, it is $2,925 to $3,900 per year, 15 to 20 percent of the license",
+        "Custom development is an optional add-on, available from $175 per hour and scoped only if it is asked for",
+        "A live demo is available at erpdemo.olmemtech.com"
+      ],
+      "call_to_action": "Offer to put the one-time license cost side by side with what they currently pay per year, and to walk them through the live demo against their own maintenance and production process.",
+      "landing_url": "https://www.olmemtech.com/olmem-erp",
+      "evidence_urls": [
+        "https://www.olmemtech.com/olmem-erp"
+      ],
+      "region_scoped": true,
+      "search_queries": [
+        "manufacturing company",
+        "machine shop",
+        "cnc machining company",
+        "metal fabrication company",
+        "sheet metal fabricator",
+        "plastic injection molding company",
+        "contract manufacturer",
+        "packaging manufacturer",
+        "industrial equipment manufacturer",
+        "food processing plant",
+        "tool and die shop",
+        "custom millwork manufacturer"
+      ],
+      "discovery_weight": 3
     },
     {
       "offer_key": "automotive-marketplace-website",
@@ -169,7 +444,7 @@
         "OEM replacement parts online store",
         "auto parts catalog website with fitment search"
       ],
-      "discovery_weight": 0
+      "discovery_weight": 2
     },
     {
       "offer_key": "enterprise-website",
@@ -217,145 +492,7 @@
         "industrial supplier",
         "multi location service company"
       ],
-      "discovery_weight": 0
-    },
-    {
-      "offer_key": "smart-chatbot",
-      "name": "Smart Chat Bot",
-      "summary": "A $500 one-time AI sales agent for the site a business already has. It answers questions, qualifies visitors before they leave, and captures every lead through a contact form that actually works - emailed to the owner and written to their dashboard at the same time, so a submission cannot silently disappear.",
-      "problems_solved": [
-        "The contact or quote form is broken and submissions fail silently, so enquiries are lost without anyone knowing",
-        "Enquiries arrive outside business hours and nobody answers until the next day",
-        "Visitors leave without ever identifying themselves, so there is no lead to follow up",
-        "The contact form produces raw submissions with no qualifying detail behind them",
-        "A small team cannot always respond quickly, and slow replies lose the job",
-        "Staff spend the day answering the same basic questions by phone and email"
-      ],
-      "ideal_customer_signals": [
-        "A contact or quote form that returns an error, or gives no confirmation that it worked",
-        "An existing website whose only contact route is a form or a phone number",
-        "No live chat or automated lead capture anywhere on the site",
-        "Wording that promises to get back to visitors, implying a manual queue",
-        "Estimate, quote, or appointment driven service business",
-        "Published business hours, so traffic outside them goes unanswered",
-        "A published FAQ page, indicating high repeat question volume"
-      ],
-      "exclusion_signals": [
-        "A live chat or chatbot widget is already present on the site",
-        "The business sells chatbot or conversational AI services itself",
-        "No website exists to install it on"
-      ],
-      "allowed_claims": [
-        "The Smart Chat Bot is $500 one-time to add to a website the business already has",
-        "It includes a fully functioning contact form, so submissions do not fail silently",
-        "Every captured lead is emailed to the business and recorded in their dashboard at the same time, giving two independent paths in",
-        "It answers common questions and captures leads 24/7, including when the business is closed",
-        "It qualifies visitors with lead qualification conversation flows before they bounce",
-        "It is trained on the business's own services and FAQs",
-        "Captured leads can also flow into an existing CRM or email platform",
-        "Website integration and setup are included",
-        "An AI chatbot is included at no extra cost with every Olmem Tech website package"
-      ],
-      "call_to_action": "Offer to show what a working capture path would have caught on their site this month, and what a captured lead looks like when it lands in their inbox.",
-      "landing_url": "https://www.olmemtech.com/chatbot-business",
-      "evidence_urls": [
-        "https://www.olmemtech.com/chatbot-business",
-        "https://www.olmemtech.com/chatbot-starter"
-      ],
-      "search_queries": [
-        "auto repair shop",
-        "dental practice",
-        "insurance agency"
-      ],
-      "discovery_weight": 0
-    },
-    {
-      "offer_key": "workflow-automation",
-      "name": "Workflow Automation",
-      "summary": "Automation of lead routing, notifications, follow-up sequences, and tool integrations. A $99 planning deposit secures the setup and covers the initial planning session, with final scope quoted after review.",
-      "problems_solved": [
-        "Leads are routed and followed up by hand, so some are missed",
-        "The same information is retyped between a website, a spreadsheet, and a CRM",
-        "No automatic follow-up happens after an enquiry arrives",
-        "Notifications depend on someone remembering to check an inbox"
-      ],
-      "ideal_customer_signals": [
-        "Enquiry process described on the site as call or email only",
-        "Multiple disconnected tools referenced across the site",
-        "Quote or booking process that states a manual turnaround time",
-        "Business coordinating scheduling, dispatch, or supplier orders"
-      ],
-      "exclusion_signals": [
-        "The business already advertises automated workflows or an integrated platform",
-        "The business sells automation or systems integration services itself",
-        "Too small to have a repeatable process worth automating"
-      ],
-      "allowed_claims": [
-        "A $99 planning deposit secures the setup and covers the initial planning session",
-        "Final pricing is determined after reviewing the specific needs and systems",
-        "Most projects range from $500 to several thousand depending on complexity and integrations",
-        "Lead routing, notifications, follow-up sequences, and CRM or tool integrations are covered"
-      ],
-      "call_to_action": "Offer a short planning call to map their current process before quoting anything.",
-      "landing_url": "https://www.olmemtech.com/workflow-automation",
-      "evidence_urls": [
-        "https://www.olmemtech.com/workflow-automation",
-        "https://www.olmemtech.com/pricing"
-      ],
-      "search_queries": [
-        "property management company",
-        "equipment rental company",
-        "commercial cleaning company"
-      ],
-      "discovery_weight": 0
-    },
-    {
-      "offer_key": "cms-integrations",
-      "name": "CMS and Integrations",
-      "summary": "A custom content management system with supplier and API integrations, including fitment, catalog, or product data sync, for a site the business already has. A $99 planning deposit covers the initial planning session.",
-      "problems_solved": [
-        "Staff cannot update site content without a developer",
-        "Product, catalog, or inventory data is maintained by hand in more than one place",
-        "Supplier data is not reflected on the website",
-        "Customers must call to check availability because the site cannot show it"
-      ],
-      "ideal_customer_signals": [
-        "Product or parts catalog on the site with no search or filtering",
-        "Pages that instruct customers to call for availability or pricing",
-        "Visible signs of a static site with stale inventory or listings",
-        "A distributor or dealer carrying supplier-sourced product data"
-      ],
-      "exclusion_signals": [
-        "The site already runs on a modern CMS the staff clearly maintain",
-        "The business sells CMS or integration services itself",
-        "No product or content catalog to manage"
-      ],
-      "allowed_claims": [
-        "A $99 planning deposit secures the setup and covers the initial planning session",
-        "Final pricing is determined after reviewing the specific needs and systems",
-        "Most projects range from $500 to several thousand depending on complexity and integrations",
-        "A custom content management system, supplier and API integrations, and fitment, catalog, or product data sync are covered"
-      ],
-      "call_to_action": "Offer to review how their catalog or content is maintained today and where a sync would remove duplicate work.",
-      "landing_url": "https://www.olmemtech.com/cms",
-      "evidence_urls": [
-        "https://www.olmemtech.com/cms",
-        "https://www.olmemtech.com/pricing"
-      ],
-      "region_scoped": false,
-      "search_queries": [
-        "parts distributor online catalog",
-        "industrial parts supplier ecommerce",
-        "equipment parts online catalog",
-        "wholesale distributor online catalog",
-        "hvac parts online store",
-        "plumbing supply online store",
-        "electrical supply online store",
-        "agricultural parts online store",
-        "marine parts online store",
-        "replacement parts catalog website"
-      ],
-      "discovery_weight": 0
+      "discovery_weight": 2
     }
   ]
 }

@@ -50,8 +50,35 @@ class OfferCatalog(BaseModel):
     offers: list[Offer]
 
 
+class ExtractedOffer(BaseModel):
+    """What the catalog extraction model is asked to return.
+
+    Deliberately looser than :class:`Offer`. The strict `offer_key` pattern used
+    to be applied at parse time, so a single offer coming back as "Contractor
+    Website" failed validation and took the whole extraction - and therefore the
+    whole catalog - with it. Keys are slugified and each offer is validated
+    individually in the builder instead.
+
+    `region_scoped` and `discovery_weight` are omitted on purpose: they are
+    operator tuning knobs, not facts about the website, so the model has no
+    business setting them.
+    """
+
+    offer_key: str
+    name: str
+    summary: str
+    problems_solved: list[str]
+    ideal_customer_signals: list[str]
+    exclusion_signals: list[str] = []
+    allowed_claims: list[str]
+    call_to_action: str
+    landing_url: str
+    evidence_urls: list[str]
+    search_queries: list[str] = []
+
+
 class CatalogExtraction(BaseModel):
-    offers: list[Offer]
+    offers: list[ExtractedOffer]
 
 
 class Candidate(BaseModel):

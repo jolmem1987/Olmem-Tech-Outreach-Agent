@@ -88,9 +88,13 @@ class OutreachOrchestrator:
         with job_lock(LOCK_IDS["catalog"]) as locked:
             if not locked:
                 return {"ok": True, "skipped": "catalog job already running"}
-            return self._activate(CatalogBuilder().build(), event="catalog_refreshed")
+            builder = CatalogBuilder()
+            catalog = builder.build()
+            return self._activate(catalog, event="catalog_refreshed", notes=builder.notes)
 
-    def _activate(self, catalog: OfferCatalog, *, event: str) -> dict[str, Any]:
+    def _activate(
+        self, catalog: OfferCatalog, *, event: str, notes: list[str] | None = None
+    ) -> dict[str, Any]:
         """Make a freshly built or imported catalog the active one."""
         save_catalog(catalog)
         sync_to_admin(
@@ -104,12 +108,17 @@ class OutreachOrchestrator:
                 ],
             },
         )
-        return {
+        result: dict[str, Any] = {
             "ok": True,
             "catalog_version": catalog.catalog_version,
             "generated_from": catalog.generated_from,
             "offer_count": len(catalog.offers),
         }
+        # Only present when something was skipped or fell back, so an ordinary
+        # run stays quiet and an unusual one explains itself on the dashboard.
+        if notes:
+            result["notes"] = notes
+        return result
 
     def discover_prospects(self) -> dict[str, Any]:
         with job_lock(LOCK_IDS["discover"]) as locked:
