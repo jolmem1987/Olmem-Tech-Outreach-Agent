@@ -195,6 +195,36 @@ def prospect_detail(
     )
 
 
+@router.post("/admin/prospects/{prospect_id}/research")
+def research_one(request: Request, prospect_id: str) -> RedirectResponse:
+    """Research and score this prospect now, instead of waiting for the batch."""
+    if not is_authenticated(request):
+        return _login_redirect()
+    if not _valid_uuid(prospect_id):
+        return _redirect("/admin/prospects", err="Invalid prospect id.")
+    _ensure_schema()
+    result = OutreachOrchestrator().research_prospect(prospect_id)
+    dest = f"/admin/prospects/{prospect_id}"
+    if result.get("ok"):
+        return _redirect(dest, msg=result.get("message", "Researched."))
+    return _redirect(dest, err=result.get("error", "Could not research this prospect."))
+
+
+@router.post("/admin/prospects/{prospect_id}/delete")
+def delete_one(request: Request, prospect_id: str) -> RedirectResponse:
+    """Remove a prospect judged a bad fit. Refused once anything has been sent."""
+    if not is_authenticated(request):
+        return _login_redirect()
+    if not _valid_uuid(prospect_id):
+        return _redirect("/admin/prospects", err="Invalid prospect id.")
+    _ensure_schema()
+    result = OutreachOrchestrator().delete_prospect(prospect_id)
+    if result.get("ok"):
+        # The prospect no longer exists, so its detail page would 404.
+        return _redirect("/admin/prospects", msg=result.get("message", "Prospect deleted."))
+    return _redirect(f"/admin/prospects/{prospect_id}", err=result.get("error", "Could not delete."))
+
+
 @router.post("/admin/prospects/{prospect_id}/draft")
 def make_draft(request: Request, prospect_id: str, regenerate: str = Form("")) -> RedirectResponse:
     if not is_authenticated(request):

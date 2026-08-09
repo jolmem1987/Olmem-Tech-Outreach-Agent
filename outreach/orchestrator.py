@@ -12,9 +12,11 @@ from outreach.db import init_db, job_lock
 from outreach.discovery import ProspectDiscovery
 from outreach.models import FitAssessment, OfferCatalog, ProspectResearch
 from outreach.repository import (
+    count_messages_for,
     count_sent_today,
     create_custom_message,
     create_message,
+    delete_prospect as delete_prospect_row,
     get_active_catalog,
     get_eligible_for_send,
     get_prospect,
@@ -161,6 +163,146 @@ class OutreachOrchestrator:
         """
         return {"ok": True, "requeued": requeue_rejected()}
 
+    def _research_one(
+        self,
+        prospect_id: str,
+        website: str,
+        catalog: OfferCatalog,
+        researcher: ProspectResearcher,
+        scorer: FitScorer,
+    ) -> dict[str, Any]:
+        """Research, score, and store one prospect.
+
+        Shared by the batch job and the admin's per-prospect button so the two
+        cannot drift: a prospect researched by hand is stored, gated, and synced
+        exactly as the nightly run would have done it.
+
+        Never raises - the batch must not die on one bad prospect, and the admin
+        needs the reason rather than a 500.
+        """
+        try:
+            research = researcher.research(website)
+            fit = scorer.score(catalog, research)
+            decision = scorer.validate(catalog, research, fit)
+            save_research_and_fit(
+                prospect_id,
+                research,
+                fit,
+                catalog.catalog_version,
+                decision.eligible,
+                decision.reasons,
+            )
+            sync_to_admin(
+                "lead_scored",
+                {
+                    "prospect_id": prospect_id,
+                    "company_name": research.company_name,
+                    "website": research.website,
+                    "email": research.business_email,
+                    "email_source_url": research.business_email_source_url,
+                    "fit_score": fit.total_score,
+                    "selected_offer_key": fit.selected_offer_key,
+                    "eligible": decision.eligible,
+                    "reasons": decision.reasons,
+                    "research": research.model_dump(mode="json"),
+                    "fit": fit.model_dump(mode="json"),
+                    "catalog_version": catalog.catalog_version,
+                },
+            )
+            return {
+                "outcome": "eligible" if decision.eligible else "rejected",
+                "fit_score": fit.total_score,
+                "selected_offer_key": fit.selected_offer_key,
+                "reasons": decision.reasons,
+            }
+        except NoPublicContact as exc:
+            # Permanent, and caught before either LLM call ran.
+            _record(mark_rejected, prospect_id, str(exc))
+            return {"outcome": "no_contact", "detail": str(exc)}
+        except Exception as exc:  # noqa: BLE001 - one prospect must not kill a batch
+            _record(mark_research_failed, prospect_id, str(exc))
+            return {"outcome": "failed", "detail": str(exc)}
+
+    def research_prospect(self, prospect_id: str) -> dict[str, Any]:
+        """Research and score one prospect on demand.
+
+        The batch job takes whatever is at the front of the queue. This is the
+        admin picking a specific company to spend a crawl and two LLM calls on,
+        which is also the only way to research something the queue would not
+        reach for days. One prospect fits inside a serverless timeout with room
+        to spare, where a full batch does not.
+        """
+        prospect = get_prospect(prospect_id)
+        if prospect is None:
+            return {"ok": False, "error": "Prospect not found."}
+        website = prospect.get("website")
+        if not website:
+            return {"ok": False, "error": "This prospect has no website to research."}
+
+        catalog = get_active_catalog()
+        if catalog is None:
+            return {"ok": False, "error": "No active offer catalog. Import or rebuild the catalog first."}
+
+        # Share the batch job's lock: researching the same prospect from both
+        # paths at once would spend two crawls and four LLM calls to store one
+        # result twice.
+        with job_lock(LOCK_IDS["research"]) as locked:
+            if not locked:
+                return {"ok": False, "error": "The research job is already running. Try again once it finishes."}
+            result = self._research_one(
+                str(prospect["id"]), website, catalog, ProspectResearcher(), FitScorer()
+            )
+
+        outcome = result["outcome"]
+        if outcome == "eligible":
+            return {
+                "ok": True,
+                "status": "eligible",
+                "message": f"Scored {result['fit_score']} and cleared the gate on {result['selected_offer_key']}.",
+            }
+        if outcome == "rejected":
+            reasons = "; ".join(result.get("reasons") or []) or "the gate refused it"
+            return {
+                "ok": True,
+                "status": "rejected",
+                "message": f"Scored {result['fit_score']} and was refused: {reasons}",
+            }
+        if outcome == "no_contact":
+            return {"ok": True, "status": "rejected", "message": f"Rejected: {result['detail']}"}
+        return {"ok": False, "error": f"Research failed: {result['detail']}"}
+
+    def delete_prospect(self, prospect_id: str) -> dict[str, Any]:
+        """Remove a prospect the admin has judged a bad fit.
+
+        Refused once anything has been emailed. `outreach_messages` cascades on
+        delete, so removing a contacted prospect would erase the record of what
+        was sent to them and when - which is exactly the record you would need if
+        a recipient ever asked. Suppression is keyed by email in its own table,
+        so a deleted prospect who unsubscribed stays suppressed and cannot be
+        contacted again by a later discovery run.
+        """
+        prospect = get_prospect(prospect_id)
+        if prospect is None:
+            return {"ok": False, "error": "Prospect not found."}
+
+        message_count = count_messages_for(prospect_id)
+        if prospect.get("last_contacted_at") or message_count:
+            return {
+                "ok": False,
+                "error": (
+                    f"{prospect.get('company_name') or 'This prospect'} has {message_count} email(s) on record. "
+                    "Deleting it would erase that send history, so nothing was deleted."
+                ),
+            }
+
+        deleted = delete_prospect_row(prospect_id)
+        if not deleted:
+            return {"ok": False, "error": "Nothing was deleted."}
+        return {
+            "ok": True,
+            "message": f"{prospect.get('company_name') or prospect.get('domain')} was deleted.",
+        }
+
     def research_and_score(self) -> dict[str, Any]:
         with job_lock(LOCK_IDS["research"]) as locked:
             if not locked:
@@ -176,46 +318,16 @@ class OutreachOrchestrator:
             no_contact = 0
             failed = 0
             for row in rows:
-                prospect_id = str(row["id"])
-                try:
-                    research = researcher.research(row["website"])
-                    fit = scorer.score(catalog, research)
-                    decision = scorer.validate(catalog, research, fit)
-                    save_research_and_fit(
-                        prospect_id,
-                        research,
-                        fit,
-                        catalog.catalog_version,
-                        decision.eligible,
-                        decision.reasons,
-                    )
-                    sync_to_admin(
-                        "lead_scored",
-                        {
-                            "prospect_id": prospect_id,
-                            "company_name": research.company_name,
-                            "website": research.website,
-                            "email": research.business_email,
-                            "email_source_url": research.business_email_source_url,
-                            "fit_score": fit.total_score,
-                            "selected_offer_key": fit.selected_offer_key,
-                            "eligible": decision.eligible,
-                            "reasons": decision.reasons,
-                            "research": research.model_dump(mode="json"),
-                            "fit": fit.model_dump(mode="json"),
-                            "catalog_version": catalog.catalog_version,
-                        },
-                    )
-                    if decision.eligible:
-                        eligible += 1
-                    else:
-                        rejected += 1
-                except NoPublicContact as exc:
-                    # Permanent, and caught before either LLM call ran.
-                    _record(mark_rejected, prospect_id, str(exc))
+                outcome = self._research_one(
+                    str(row["id"]), row["website"], catalog, researcher, scorer
+                )
+                if outcome["outcome"] == "eligible":
+                    eligible += 1
+                elif outcome["outcome"] == "rejected":
+                    rejected += 1
+                elif outcome["outcome"] == "no_contact":
                     no_contact += 1
-                except Exception as exc:
-                    _record(mark_research_failed, prospect_id, str(exc))
+                else:
                     failed += 1
             return {
                 "ok": True,

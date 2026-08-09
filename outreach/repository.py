@@ -229,6 +229,38 @@ def delete_prospects(prospect_ids: list[str]) -> int:
         return cursor.rowcount
 
 
+def count_messages_for(prospect_id: str) -> int:
+    """How many emails exist for this prospect, drafted or sent."""
+    with connection() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS c FROM outreach_messages WHERE prospect_id = %s::uuid",
+            (str(prospect_id),),
+        ).fetchone()
+    return int(row["c"]) if row else 0
+
+
+def delete_prospect(prospect_id: str) -> int:
+    """Delete one prospect at any status.
+
+    Unlike :func:`delete_prospects`, which the purge job restricts to
+    'discovered' rows, this is the admin deliberately removing a prospect they
+    have looked at and judged a bad fit - which is just as likely to be one that
+    has already been researched and rejected.
+
+    `outreach_messages.prospect_id` cascades, so this would also erase the send
+    record of anyone already contacted. The orchestrator refuses that case; the
+    guard is not repeated here so the reason can be reported to the admin rather
+    than silently deleting nothing.
+    """
+    with connection() as conn:
+        cursor = conn.execute(
+            "DELETE FROM outreach_prospects WHERE id = %s::uuid",
+            (str(prospect_id),),
+        )
+        conn.commit()
+        return cursor.rowcount
+
+
 def mark_rejected(prospect_id: str, reason: str) -> None:
     """Reject permanently. Unlike research_failed, this status is not re-queued."""
     with connection() as conn:

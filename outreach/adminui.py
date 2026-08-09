@@ -467,11 +467,40 @@ def prospect_detail_page(
         )
     reason = "" if can_send else '<p class="help">Available once the prospect is researched, scored, has a verified email, and a selected offer.</p>'
 
+    # Research on demand, so a promising company can be graded now rather than
+    # when the queue happens to reach it - and a hopeless one removed before it
+    # ever costs a crawl and two model calls.
+    researched = bool(research and fit)
+    contacted = bool(p.get("last_contacted_at")) or bool(messages)
+    company = esc(p.get("company_name") or p.get("domain") or "this prospect")
+    delete_control = (
+        '<span class="help">Already emailed, so it cannot be deleted &mdash; that would erase the send record.</span>'
+        if contacted
+        else (
+            f'<form class="inline" method="post" action="/admin/prospects/{esc(p["id"])}/delete" '
+            f"onsubmit=\"return confirm('Delete {company} permanently? This cannot be undone.')\">"
+            f'<button class="button secondary small">Delete prospect</button></form>'
+        )
+    )
+    actions_card = f"""
+    <div class="card">
+      <div class="actions" style="margin-top:0">
+        <form class="inline" method="post" action="/admin/prospects/{esc(p['id'])}/research">
+          <button class="button small">{"Re-research &amp; score" if researched else "Research &amp; score now"}</button>
+        </form>
+        {delete_control}
+      </div>
+      <p class="help">Researching this one prospect costs a crawl and two model calls, and stores the result
+      exactly as the nightly job would. Deleting is permanent; a suppressed address stays suppressed, so a
+      deleted prospect who unsubscribed can still never be contacted again.</p>
+    </div>"""
+
     body = f"""
     {_flash(msg, err)}
     <p><a href="/admin/prospects">← Back to prospects</a></p>
     <h1>{esc(p.get('company_name') or p.get('domain'))}</h1>
     <p class="muted">{esc(p.get('website'))} · {badge(p.get('status'))} · fit {esc(p.get('fit_score') if p.get('fit_score') is not None else '—')}</p>
+    {actions_card}
     {'<div class="flash err">Scored against an older catalog, so the selected offer is out of date. Run "Research &amp; score" to re-select it before drafting.</div>' if p.get('status') == 'needs_rescore' else ''}
 
     <div class="grid2">
