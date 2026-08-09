@@ -58,7 +58,8 @@
         "The site is current and only its lead capture is failing - a smaller offer fits the evidence better than a rebuild",
         "National franchise whose website is managed corporately",
         "The business is itself a web design or marketing agency",
-        "Site displays a recent redesign or launch announcement"
+        "Site displays a recent redesign or launch announcement",
+        "site_platform is WordPress and the existing site is current and working — installing onto it is the narrower offer than replacing it"
       ],
       "allowed_claims": [
         "The Contractor Website package is $1,500 flat rate and covers up to 5 pages",
@@ -134,7 +135,8 @@
         "The contractor already has a working, mobile-friendly site with a quote funnel",
         "The business needs individual service and location pages for local search - the Contractor Website package fits that scope better",
         "National franchise whose website is managed corporately",
-        "The business is itself a web design or marketing agency"
+        "The business is itself a web design or marketing agency",
+        "site_platform is WordPress and the existing site is current and working — installing onto it is the narrower offer than replacing it"
       ],
       "allowed_claims": [
         "The Contractor Website Offer is $500",
@@ -190,7 +192,8 @@
       "exclusion_signals": [
         "A live chat or chatbot widget is already present on the site",
         "The business sells chatbot or conversational AI services itself",
-        "No website exists to install it on"
+        "No website exists to install it on",
+        "site_platform is WordPress — the Olmem AI Chat plugin installs directly and is the narrower offer"
       ],
       "allowed_claims": [
         "The Smart Chat Bot is $500 one-time to add to a website the business already has",
@@ -215,6 +218,64 @@
         "insurance agency"
       ],
       "discovery_weight": 4
+    },
+    {
+      "offer_key": "wordpress-ai-chat-plugin",
+      "name": "Olmem AI Chat for WordPress",
+      "summary": "An installable WordPress plugin that answers visitor questions and captures leads on the site a business already has. It works out of the box in offline mode with no API key, using a keyword-matched FAQ library and the site's own scraped content, and can be upgraded to Claude, OpenAI, Gemini, or Mistral with a single key. Leads are saved in the business's own WordPress database and emailed to the admin. Owned outright, with no monthly subscription.",
+      "problems_solved": [
+        "Website chat tools charge a recurring per-seat or per-conversation fee for a widget the business never owns",
+        "Leads are locked inside a third-party dashboard rather than the business's own site",
+        "The chat widget breaks whenever the vendor's API is unavailable",
+        "Visitors ask the same questions repeatedly and nobody is available to answer out of hours",
+        "Visitors leave without identifying themselves, so there is no lead to follow up"
+      ],
+      "ideal_customer_signals": [
+        "site_platform is WordPress, so a plugin can actually be installed",
+        "An existing WordPress site that is current and working, where a rebuild is not warranted",
+        "No live chat or automated lead capture anywhere on the site",
+        "A published FAQ page, indicating repeat question volume worth answering automatically",
+        "Published business hours, so enquiries outside them go unanswered",
+        "A small team where nobody can watch the inbox continuously"
+      ],
+      "exclusion_signals": [
+        "site_platform is anything other than WordPress — a Wix, Squarespace, Webflow, or hand-built site cannot install a WordPress plugin at all",
+        "site_platform was not detected, so it cannot be confirmed the plugin is installable",
+        "A live chat or chatbot widget is already present on the site",
+        "The business sells chatbot, plugin, or conversational AI products itself",
+        "The site has no structure worth keeping, which makes a rebuild the better fit than installing onto it"
+      ],
+      "allowed_claims": [
+        "Olmem AI Chat is an installable WordPress plugin for a site the business already has",
+        "It works out of the box in free offline mode, with no API key required",
+        "Offline mode answers from a keyword-matched FAQ library and the site's own scraped content",
+        "It can optionally be upgraded to Claude, OpenAI, Gemini, or Mistral with a single API key",
+        "It falls back gracefully if an AI provider is unavailable, rather than breaking",
+        "Captured leads are saved into the business's own WordPress database and emailed to the admin",
+        "The widget is customizable: bot name, greeting, accent colour, quick suggestions, and position",
+        "It is a one-time purchase with no monthly subscription — the business owns it outright",
+        "Professional installation and configuration is available as a separate add-on",
+        "A working demo of the real plugin widget can be tried on the product page"
+      ],
+      "call_to_action": "Offer to point them at the page where they can try the real plugin widget themselves before deciding anything.",
+      "landing_url": "https://www.olmemtech.com/projects/olmem-ai-chatbot",
+      "evidence_urls": [
+        "https://www.olmemtech.com/projects/olmem-ai-chatbot"
+      ],
+      "region_scoped": true,
+      "search_queries": [
+        "auto repair shop",
+        "dental practice",
+        "insurance agency",
+        "law firm",
+        "veterinary clinic",
+        "chiropractic clinic",
+        "real estate agency",
+        "accounting firm",
+        "medical clinic",
+        "salon and spa"
+      ],
+      "discovery_weight": 3
     },
     {
       "offer_key": "cms-integrations",

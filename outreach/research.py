@@ -7,6 +7,7 @@ from outreach.criteria import get_criteria
 from outreach.crawler import WebCrawler
 from outreach.llm import StructuredLLM
 from outreach.models import ProspectResearch, SitePage
+from outreach.platform import is_builder_subdomain
 from outreach.util import normalize_domain
 
 
@@ -81,6 +82,7 @@ class ProspectResearcher:
         crawler = WebCrawler()
         try:
             pages, emails = crawler.crawl(website, self.settings.prospect_max_pages)
+            platform = crawler.platform
         finally:
             crawler.close()
         if not pages:
@@ -101,6 +103,9 @@ class ProspectResearcher:
         domain = normalize_domain(website)
         research.website = website
         research.company_domain = domain
+        # Overwrite whatever the model put here. These are measured, not read.
+        research.site_platform = platform
+        research.site_on_builder_subdomain = is_builder_subdomain(website)
 
         allowed_urls = {p.url for p in pages}
         page_text = {p.url: " ".join(p.text.lower().split()) for p in pages}

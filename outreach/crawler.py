@@ -11,6 +11,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from outreach.models import SitePage
+from outreach.platform import detect_platform
 from outreach.util import is_public_http_url, normalize_url, same_registrable_host
 
 
@@ -36,6 +37,10 @@ class WebCrawler:
             follow_redirects=True,
             headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml"},
         )
+        # What the site is built with, taken from the first page that parses.
+        # Read it off the crawler after crawl() rather than from the return
+        # tuple, so the existing (pages, emails) callers are unaffected.
+        self.platform: str | None = None
 
     def close(self) -> None:
         self.client.close()
@@ -105,6 +110,11 @@ class WebCrawler:
                 return None, [], {}
         except httpx.HTTPError:
             return None, [], {}
+
+        # Detect before the script tags are stripped: nearly every platform
+        # signature lives in an asset URL inside a <script> or <link>.
+        if self.platform is None:
+            self.platform = detect_platform(response.text, dict(response.headers), url)
 
         soup = BeautifulSoup(response.text, "html.parser")
         for element in soup(["script", "style", "noscript", "svg", "canvas"]):

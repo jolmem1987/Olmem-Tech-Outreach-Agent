@@ -47,7 +47,14 @@ class ProspectDiscovery:
                 continue
             bases = offer.search_queries or offer.ideal_customer_signals[:3]
             if offer.region_scoped and self.regions:
-                queries = [f"{base} {region} business" for base in bases for region in self.regions]
+                # Region-major, so consecutive queries change the trade rather
+                # than the state. Base-major put all 50 states of one trade next
+                # to each other, and because a run takes a *contiguous* slice,
+                # every single discovery run came back as one trade: 32 trades x
+                # 50 states is 1600 queries, a run picks 8 of them, and the daily
+                # rotation only advances by those 8. Roofing alone took a week to
+                # get past, and the full catalogue would have taken 200 days.
+                queries = [f"{base} {region} business" for region in self.regions for base in bases]
             else:
                 queries = list(bases)
             if queries:

@@ -97,6 +97,12 @@ class ProspectResearch(BaseModel):
     contact_name: str | None = None
     contact_role: str | None = None
     public_contact_page: str | None = None
+    # Set in code from the crawled markup, never by the model, and overwritten
+    # after parsing. It decides which offers are even applicable - a plugin can
+    # only be installed on a platform that takes plugins - so a guess is worse
+    # than nothing.
+    site_platform: str | None = None
+    site_on_builder_subdomain: bool = False
     company_summary: str
     observed_problems: list[str]
     positive_signals: list[str]

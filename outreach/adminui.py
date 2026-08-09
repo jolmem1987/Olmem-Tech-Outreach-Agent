@@ -506,6 +506,8 @@ def prospect_detail_page(
     <div class="grid2">
       <div class="card kv"><h2>Prospect</h2>
         <p><strong>Domain:</strong> {esc(p.get('domain'))}</p>
+        <p><strong>Built with:</strong> {esc(research.get('site_platform') or 'not detected') if isinstance(research, dict) else '—'}
+          {' <span class="badge b-amber">builder subdomain</span>' if isinstance(research, dict) and research.get('site_on_builder_subdomain') else ''}</p>
         <p><strong>Contact email:</strong> {esc(email or 'None verified')}</p>
         <p><strong>Selected offer:</strong> {esc(p.get('selected_offer_key') or '—')}</p>
         <p><strong>Last contacted:</strong> {_dt(p.get('last_contacted_at'))}</p>

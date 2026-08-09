@@ -189,6 +189,14 @@ site needs rebuilding. Reserve a full website offer for sites whose structure or
 itself the problem, and score offer_alignment lower when a smaller offer would resolve what
 the evidence actually shows.
 
+prospect_research carries site_platform and site_on_builder_subdomain, both measured from the
+site's own markup and headers rather than inferred from its text. Treat them as fact and never
+contradict them. They decide which offers are deliverable at all: anything installed as a plugin
+requires WordPress, Drupal, Joomla, or Shopify, and cannot be sold to a Wix, Squarespace, Webflow,
+or hand-built site. Score offer_alignment low, and prefer a different offer, when the platform
+makes the selected one impossible or awkward to deliver. A site on a builder subdomain does not
+own the address it trades under, which favours replacing the site over installing onto it.
+
 A business should normally remain below {gate} unless there is concrete problem evidence,
 a direct offer match, at least two independent evidence facts, and a valid public business
 email. Industry alone is insufficient. Return contradictions for any no-solicitation text,
